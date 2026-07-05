@@ -1,0 +1,40 @@
+<script>
+  let count = 0;
+  
+  function increment() {
+    count++;
+  }
+</script>
+
+<template>
+  <div class="card">
+    <h1>Welcome to FluxDOM 🌊</h1>
+    <p>Adaptive Rendering Framework</p>
+    <button @click="increment">
+      Count is: {count}
+    </button>
+  </div>
+</template>
+
+<style scoped>
+  .card {
+    padding: 2rem;
+    border-radius: 12px;
+    background: #f4f4f5;
+    text-align: center;
+    font-family: system-ui, sans-serif;
+  }
+  button {
+    background: #4f46e5;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    margin-top: 1rem;
+  }
+  button:hover {
+    background: #4338ca;
+  }
+</style>

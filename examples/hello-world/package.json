@@ -1,0 +1,19 @@
+{
+  "name": "hello-world",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fluxdom/runtime": "*"
+  },
+  "devDependencies": {
+    "@fluxdom/compiler": "*",
+    "@fluxdom/vite-plugin": "*",
+    "vite": "^5.2.0"
+  }
+}

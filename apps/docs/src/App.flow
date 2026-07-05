@@ -1,0 +1,69 @@
+<script>
+  let activeTab = 'intro';
+  
+  function setTab(tab) {
+    activeTab = tab;
+  }
+</script>
+
+<template>
+  <div class="docs-container">
+    <aside class="sidebar">
+      <h2>FluxDOM</h2>
+      <ul>
+        <li><button :class="activeTab === 'intro' ? 'active' : ''" @click="() => setTab('intro')">Introduction</button></li>
+        <li><button :class="activeTab === 'reactivity' ? 'active' : ''" @click="() => setTab('reactivity')">Reactivity</button></li>
+        <li><button :class="activeTab === 'rendering' ? 'active' : ''" @click="() => setTab('rendering')">Adaptive Rendering</button></li>
+      </ul>
+    </aside>
+    <main class="content">
+      {#if activeTab === 'intro'}
+        <h1>Introduction</h1>
+        <p>FluxDOM is an adaptive rendering framework...</p>
+      {/if}
+      {#if activeTab === 'reactivity'}
+        <h1>Reactivity</h1>
+        <p>FluxDOM uses fine-grained signals compiled to surgical DOM updates.</p>
+      {/if}
+      {#if activeTab === 'rendering'}
+        <h1>Adaptive Rendering</h1>
+        <p>FluxDOM automatically chooses between SSG, SSR, and CSR.</p>
+      {/if}
+    </main>
+  </div>
+</template>
+
+<style scoped>
+  .docs-container {
+    display: flex;
+    min-height: 100vh;
+    font-family: system-ui, sans-serif;
+  }
+  .sidebar {
+    width: 250px;
+    background: #f4f4f5;
+    padding: 2rem;
+  }
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+  }
+  .sidebar button {
+    background: none;
+    border: none;
+    text-align: left;
+    width: 100%;
+    padding: 0.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #4b5563;
+  }
+  .sidebar button.active {
+    color: #4f46e5;
+    font-weight: bold;
+  }
+  .content {
+    flex: 1;
+    padding: 2rem 4rem;
+  }
+</style>

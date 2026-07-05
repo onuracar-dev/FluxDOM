@@ -1,0 +1,19 @@
+{
+  "name": "docs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fluxdom/runtime": "*",
+    "@fluxdom/router": "*"
+  },
+  "devDependencies": {
+    "@fluxdom/compiler": "*",
+    "@fluxdom/vite-plugin": "*",
+    "vite": "^5.2.0"
+  }
+}
