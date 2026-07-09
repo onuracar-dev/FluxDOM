@@ -1,8 +1,0 @@
-import { RenderStrategy } from './analyzer/index.js';
-export interface CompileResult {
-    js: string;
-    css: string;
-    strategy: RenderStrategy;
-}
-export declare function compileSource(source: string, filename: string): CompileResult;
-//# sourceMappingURL=index.d.ts.map

@@ -1,1 +1,0 @@
-{"version":3,"file":"lifecycle.js","sourceRoot":"","sources":["lifecycle.ts"],"names":[],"mappings":"AAAA,+BAA+B;AAC/B,IAAI,gBAAgB,GAAQ,IAAI,CAAC;AAEjC,MAAM,UAAU,OAAO,CAAC,EAA6B;IACnD,uBAAuB;IACvB,sDAAsD;AACxD,CAAC;AAED,MAAM,UAAU,SAAS,CAAC,EAAc;IACtC,yBAAyB;IACzB,sDAAsD;AACxD,CAAC;AAED,MAAM,UAAU,QAAQ,CAAC,EAAc;IACrC,wBAAwB;IACxB,8DAA8D;AAChE,CAAC"}

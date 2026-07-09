@@ -1,0 +1,13 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/cli" },
+    { "path": "./packages/compiler" },
+    { "path": "./packages/devtools" },
+    { "path": "./packages/runtime" },
+    { "path": "./packages/server" },
+    { "path": "./packages/router" },
+    { "path": "./packages/store" },
+    { "path": "./packages/vite-plugin" }
+  ]
+}

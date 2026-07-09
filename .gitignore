@@ -1,5 +1,11 @@
 node_modules/
 dist/
 *.tsbuildinfo
+*.js.map
+*.d.ts
+*.d.ts.map
+**/src/**/*.js
+**/vite.config.js
+**/vitest.config.js
 .env
 .npmrc

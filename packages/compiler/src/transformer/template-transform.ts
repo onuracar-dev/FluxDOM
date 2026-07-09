@@ -1,5 +1,5 @@
 import { ComponentAnalysis } from '../analyzer/index.js';
-import { ElementNode, ExpressionNode, TemplateNode, TextNode } from '../parser/ast.js';
+import { ElementNode, ExpressionNode, IfBlockNode, TemplateNode, TextNode } from '../parser/ast.js';
 
 export function transformTemplate(analysis: ComponentAnalysis): string {
   const { component } = analysis;
@@ -75,6 +75,31 @@ export function transformTemplate(analysis: ComponentAnalysis): string {
         domOps.push(`insert(${parentVar}, ${exprVar});`);
       }
       return exprVar;
+    } else if (node.type === 'IfBlock') {
+      const block = node as IfBlockNode;
+      const blockVar = genVar('if');
+      imports.add('createElement');
+      imports.add('createEffect');
+      imports.add('setAttribute');
+      domOps.push(`const ${blockVar} = createElement('div');`);
+
+      for (const child of block.children) {
+        processNode(child, blockVar);
+      }
+
+      let condition = block.condition;
+      for (const sig of analysis.scriptAnalysis.signals) {
+        const readRegex = new RegExp(`(?<!\\.)\\b${sig}\\b`, 'g');
+        condition = condition.replace(readRegex, `__${sig}()`);
+      }
+
+      domOps.push(`createEffect(() => { setAttribute(${blockVar}, 'style', ${condition} ? '' : 'display: none;'); });`);
+
+      if (parentVar) {
+        imports.add('insert');
+        domOps.push(`insert(${parentVar}, ${blockVar});`);
+      }
+      return blockVar;
     }
     return '';
   }

@@ -7,7 +7,7 @@
     "pnpm": ">=8"
   },
   "scripts": {
-    "build": "tsc -b tsconfig.base.json && tsc -b packages/vite-plugin/tsconfig.json",
+    "build": "tsc -b --force && npm run build --workspace docs && npm run build --workspace hello-world",
     "dev": "npm run dev --workspaces",
     "test": "vitest run",
     "lint": "eslint .",

@@ -1,4 +1,4 @@
-import { FlowComponent, ScriptBlock, StyleBlock, TemplateBlock, TemplateNode, ElementNode, ExpressionNode, TextNode } from './ast.js';
+import { FlowComponent, ScriptBlock, StyleBlock, TemplateBlock, TemplateNode, ElementNode, ExpressionNode, TextNode, IfBlockNode } from './ast.js';
 
 export function parse(source: string, filename: string = 'unknown.flow'): FlowComponent {
   const scriptMatch = source.match(/<script(?:\s+lang=["']([^"']+)["'])?>([\s\S]*?)<\/script>/);
@@ -21,7 +21,7 @@ export function parse(source: string, filename: string = 'unknown.flow'): FlowCo
 
 function parseTemplate(html: string): TemplateNode[] {
   const rootChildren: TemplateNode[] = [];
-  const stack: { node: ElementNode, tag: string }[] = [];
+  const stack: { node: ElementNode | IfBlockNode, tag: string }[] = [];
   let current = html;
 
   while (current.length > 0) {
@@ -82,13 +82,28 @@ function parseTemplate(html: string): TemplateNode[] {
   return rootChildren;
 }
 
-function pushTextOrExpr(text: string, stack: { node: ElementNode }[], rootChildren: TemplateNode[]) {
+function pushTextOrExpr(text: string, stack: { node: ElementNode | IfBlockNode }[], rootChildren: TemplateNode[]) {
   const parts = text.split(/(\{.*?\})/g);
   for (const part of parts) {
     if (!part) continue;
     let node: TemplateNode;
     if (part.startsWith('{') && part.endsWith('}')) {
-      node = { type: 'Expression', content: part.slice(1, -1).trim() } as ExpressionNode;
+      const content = part.slice(1, -1).trim();
+      if (content.startsWith('#if ')) {
+        const block = { type: 'IfBlock', condition: content.slice(4).trim(), children: [] } as IfBlockNode;
+        if (stack.length > 0) {
+          stack[stack.length - 1].node.children.push(block);
+        } else {
+          rootChildren.push(block);
+        }
+        stack.push({ node: block });
+        continue;
+      }
+      if (content === '/if') {
+        stack.pop();
+        continue;
+      }
+      node = { type: 'Expression', content } as ExpressionNode;
     } else if (part.trim()) {
       node = { type: 'Text', content: part.trim() } as TextNode;
     } else continue;
