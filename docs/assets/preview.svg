@@ -1,0 +1,23 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" rx="26" fill="#0E1117"/>
+  <rect x="44" y="44" width="1112" height="542" rx="18" fill="#161B22" stroke="#30363D"/>
+  <text x="76" y="106" fill="#F0F6FC" font-family="Segoe UI, Arial" font-size="42" font-weight="700">FluxDOM</text>
+  <text x="76" y="145" fill="#8B949E" font-family="Segoe UI, Arial" font-size="20">.flow compiler + fine-grained DOM runtime</text>
+  <g font-family="Segoe UI, Arial" font-size="18" font-weight="600">
+    <rect x="78" y="218" width="190" height="82" rx="12" fill="#1F6FEB"/>
+    <text x="118" y="268" fill="white">.flow file</text>
+    <rect x="330" y="218" width="190" height="82" rx="12" fill="#238636"/>
+    <text x="379" y="268" fill="white">Parser</text>
+    <rect x="582" y="218" width="190" height="82" rx="12" fill="#9E6A03"/>
+    <text x="622" y="268" fill="white">Analyzer</text>
+    <rect x="834" y="218" width="230" height="82" rx="12" fill="#8957E5"/>
+    <text x="884" y="268" fill="white">DOM output</text>
+  </g>
+  <path d="M278 259H318" stroke="#8B949E" stroke-width="4" stroke-linecap="round"/>
+  <path d="M530 259H570" stroke="#8B949E" stroke-width="4" stroke-linecap="round"/>
+  <path d="M782 259H822" stroke="#8B949E" stroke-width="4" stroke-linecap="round"/>
+  <rect x="78" y="362" width="986" height="130" rx="14" fill="#0D1117" stroke="#30363D"/>
+  <text x="110" y="410" fill="#7EE787" font-family="Consolas, monospace" font-size="22">&lt;button @click="increment"&gt;Count: {count}&lt;/button&gt;</text>
+  <text x="110" y="454" fill="#A5D6FF" font-family="Consolas, monospace" font-size="22">createEffect(() =&gt; setText(node, count()))</text>
+  <text x="76" y="548" fill="#8B949E" font-family="Segoe UI, Arial" font-size="18">Compiler design, TypeScript project references, Vite integration, direct DOM operations.</text>
+</svg>

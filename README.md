@@ -2,27 +2,31 @@
 
 Experimental `.flow` component compiler and fine-grained DOM runtime.
 
-FluxDOM is a monorepo experiment around adaptive rendering. It explores how a compiler can analyze single-file components, generate direct DOM operations, and avoid a Virtual DOM while still giving developers a simple component format.
+<img src="./docs/assets/preview.svg" alt="FluxDOM architecture preview">
 
-## Why It Exists
+FluxDOM explores what a frontend framework can look like when a compiler does more of the work: parse a single-file component, analyze its behavior, infer a rendering strategy, and generate direct DOM operations instead of diffing a Virtual DOM tree.
 
-Frontend projects often force developers to choose between SSG, SSR, CSR, and partial hydration early. FluxDOM explores a compiler-driven path:
+## What It Demonstrates
 
-- parse `.flow` single-file components
-- analyze script and template behavior
-- infer a rendering strategy
-- generate focused DOM operations
-- keep runtime reactivity small
+- Compiler pipeline design for a custom component format
+- Fine-grained signal runtime and effect tracking
+- Direct DOM generation from templates
+- Conditional block support with `{#if ...}{/if}`
+- Vite plugin integration for `.flow` files
+- TypeScript project references inside a monorepo
+- Generated artifact cleanup and reproducible build setup
 
-## Monorepo Packages
+## Monorepo Map
 
-- `@fluxdom/compiler` - parses, analyzes, and transforms `.flow` files
-- `@fluxdom/runtime` - signals, effects, DOM helpers, and hydration helpers
-- `@fluxdom/server` - server rendering utilities
-- `@fluxdom/router` - routing primitives
-- `@fluxdom/store` - state helpers
-- `@fluxdom/vite-plugin` - Vite integration for `.flow` files
-- `@fluxdom/cli` - prototype CLI commands
+| Package | Purpose |
+| --- | --- |
+| `@fluxdom/compiler` | Parses, analyzes, and transforms `.flow` files |
+| `@fluxdom/runtime` | Signals, effects, DOM helpers, and hydration helpers |
+| `@fluxdom/server` | Server rendering utilities |
+| `@fluxdom/router` | Routing primitives |
+| `@fluxdom/store` | Store helpers built around the runtime |
+| `@fluxdom/vite-plugin` | Vite integration for `.flow` modules |
+| `@fluxdom/cli` | Prototype command-line surface |
 
 ## Example Component
 
@@ -46,9 +50,16 @@ Frontend projects often force developers to choose between SSG, SSR, CSR, and pa
 </style>
 ```
 
-## Project Status
+## Build Flow
 
-FluxDOM is a prototype, not production framework code. It is valuable as a portfolio project because it shows compiler work, runtime design, monorepo structure, Vite plugin integration, and test/build discipline.
+```text
+.flow file
+  -> parser
+  -> static analyzer
+  -> script/template/style transforms
+  -> direct DOM runtime calls
+  -> Vite application bundle
+```
 
 ## Development
 
@@ -58,10 +69,25 @@ npm test
 npm run build
 ```
 
+## Current Status
+
+FluxDOM is a prototype, not production framework code. Its value is in the engineering surface: compiler work, runtime design, package boundaries, build orchestration, and framework-level thinking.
+
 ## Recent Hardening
 
-Generated artifacts were removed from source control, workspace builds were stabilized, and `{#if ...}{/if}` template blocks now compile correctly.
+- Removed generated `.js`, `.d.ts`, `dist`, cache, and nested dependency artifacts from source control
+- Stabilized root test config so Vitest runs TypeScript source tests in `jsdom`
+- Fixed monorepo build sequencing with TypeScript project references
+- Added support for `{#if ...}{/if}` template blocks
 
-## License
+## Roadmap
 
-MIT
+- Expand parser coverage for loops and nested directives
+- Add compiler fixture tests
+- Improve scoped CSS handling
+- Add a small interactive docs/demo page
+- Publish package-level API documentation
+
+## Author
+
+Onur Acar - <https://github.com/onuracar-dev>
