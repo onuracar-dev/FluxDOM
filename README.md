@@ -1,3 +1,11 @@
+## Project Snapshot
+
+FluxDOM is an experimental web framework that compiles `.flow` single-file components into direct DOM operations instead of relying on a Virtual DOM. The project demonstrates compiler design, fine-grained reactivity, Vite integration, SSR-oriented package structure, and monorepo build orchestration.
+
+- **Core idea:** automatically choose rendering strategy from component analysis while keeping runtime reactivity small.
+- **Recent hardening:** generated artifacts were removed from source control, workspace builds were stabilized, and `{#if ...}{/if}` template blocks now compile correctly.
+- **Validation:** `npm test` and `npm run build`.
+
 <div align="center">
   <h1>🌊 FluxDOM</h1>
   <p><strong>The Adaptive Rendering Framework</strong></p>
