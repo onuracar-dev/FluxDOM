@@ -1,6 +1,7 @@
 {
   "name": "FluxDOM-monorepo",
   "version": "0.1.0",
+  "description": "Experimental .flow component compiler and fine-grained DOM runtime.",
   "private": true,
   "engines": {
     "node": ">=18",
