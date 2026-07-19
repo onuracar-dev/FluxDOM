@@ -1,1 +1,1 @@
-export * from './stringifier';
+export * from './stringifier.js';

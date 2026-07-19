@@ -43,3 +43,7 @@ export function setProperty(el: any, key: string, value: any): void {
 export function setText(node: Text, value: string): void {
   node.nodeValue = value;
 }
+
+export function clearChildren(node: Element): void {
+  node.replaceChildren();
+}

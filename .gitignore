@@ -9,3 +9,4 @@ dist/
 **/vitest.config.js
 .env
 .npmrc
+.fluxdom-cli-test-*/

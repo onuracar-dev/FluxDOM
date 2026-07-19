@@ -4,90 +4,110 @@ Experimental `.flow` component compiler and fine-grained DOM runtime.
 
 <img src="./docs/assets/preview.svg" alt="FluxDOM architecture preview">
 
-FluxDOM explores what a frontend framework can look like when a compiler does more of the work: parse a single-file component, analyze its behavior, infer a rendering strategy, and generate direct DOM operations instead of diffing a Virtual DOM tree.
+[Live website](https://fluxdom-6e1gb0.v2.appdeploy.ai/) · [GitHub repository](https://github.com/onuracar-dev/FluxDOM)
 
-## What It Demonstrates
+FluxDOM explores a compiler-first frontend model: parse a single-file
+component, analyze its behavior, generate direct DOM operations, and let small
+signals update only the values that depend on them.
 
-- Compiler pipeline design for a custom component format
-- Fine-grained signal runtime and effect tracking
-- Direct DOM generation from templates
-- Conditional block support with `{#if ...}{/if}`
-- Vite plugin integration for `.flow` files
-- TypeScript project references inside a monorepo
-- Generated artifact cleanup and reproducible build setup
+> **Status:** a pre-1.0 engineering prototype, not a production framework.
+> Syntax, generated output, SSR behavior, and package APIs can change.
 
-## Monorepo Map
+## Try the starter
 
-| Package | Purpose |
-| --- | --- |
-| `@fluxdom/compiler` | Parses, analyzes, and transforms `.flow` files |
-| `@fluxdom/runtime` | Signals, effects, DOM helpers, and hydration helpers |
-| `@fluxdom/server` | Server rendering utilities |
-| `@fluxdom/router` | Routing primitives |
-| `@fluxdom/store` | Store helpers built around the runtime |
-| `@fluxdom/vite-plugin` | Vite integration for `.flow` modules |
-| `@fluxdom/cli` | Prototype command-line surface |
+After the packages are available on npm:
 
-## Example Component
+```bash
+npx @fluxdom/cli create my-flow-app
+cd my-flow-app
+npm install
+npm run dev
+```
+
+For repository development:
+
+```bash
+npm ci
+npm test
+npm run build
+npm run dev --workspace hello-world
+```
+
+## Component example
 
 ```html
-<script>
-  let count = 0;
-
-  function increment() {
-    count++;
-  }
+<script lang="ts">
+  let items = ['compiler', 'signals'];
+  let visible = true;
 </script>
 
 <template>
-  <button @click="increment">Count: {count}</button>
+  {#if visible}
+    <ul :class="items.length > 1 ? 'ready' : ''">
+      {#each items as item, index}
+        <li>{index}: {item}</li>
+      {/each}
+    </ul>
+  {/if}
 </template>
 
 <style scoped>
-  button {
-    padding: 0.75rem 1rem;
-  }
+  li { color: rebeccapurple; }
 </style>
 ```
 
-## Build Flow
+The parser validates nesting and reports filenames for malformed tags or
+directives. Nested `if`/`each`, reactive attributes, events, expressions, and
+scoped style markers are covered by fixtures. The Vite plugin now imports its
+virtual CSS output, so component styles are included in application builds.
+
+## Packages
+
+| Package | Current scope |
+| --- | --- |
+| `@fluxdom/compiler` | `.flow` parser, analysis, and prototype code generation |
+| `@fluxdom/runtime` | Signals, effects, batching, and direct DOM helpers |
+| `@fluxdom/vite-plugin` | `.flow` transforms, virtual CSS, and safe static SSR helper |
+| `@fluxdom/server` | Escaped static serialization and explicit server DOM operations |
+| `@fluxdom/router` | Route matching and browser navigation signals |
+| `@fluxdom/store` | Signal-backed stores with browser persistence |
+| `@fluxdom/cli` | Working project scaffold plus local Vite wrappers |
+
+The DevTools experiment remains private because its panel and asset packaging
+are not ready for independent distribution.
+
+## Supported boundary and known limitations
+
+- The script transform recognizes a deliberately small top-level `let` subset;
+  it is not a general JavaScript/TypeScript AST transform yet.
+- `{#each}` rerenders its block when the collection signal changes. It does not
+  perform keyed reconciliation.
+- `{#if}` uses a display wrapper rather than structural mount/unmount semantics.
+- Scoped CSS handles ordinary flat selectors. Complex nested at-rules and
+  `:global(...)` behavior need broader fixture coverage.
+- Hydration is currently destructive client rerendering.
+- Static SSR never evaluates component source. Dynamic templates return a
+  client-render mount point; full SSR is not implemented.
+- Router mounting, nested routes, lifecycle hooks, source maps, and fine-grained
+  HMR remain roadmap work.
+
+Do not compile and execute untrusted `.flow` source. See [SECURITY.md](./SECURITY.md).
+
+## Architecture
 
 ```text
-.flow file
-  -> parser
-  -> static analyzer
+.flow source
+  -> structural parser
+  -> static analysis
   -> script/template/style transforms
-  -> direct DOM runtime calls
-  -> Vite application bundle
+  -> direct DOM runtime calls + virtual CSS module
+  -> Vite bundle
 ```
 
-## Development
+FluxDOM and NimbleJS intentionally remain independently versioned. Their shared
+semantic boundary and revisit criteria are recorded in
+[`docs/adr/0001-fluxdom-and-nimblejs-boundary.md`](./docs/adr/0001-fluxdom-and-nimblejs-boundary.md).
 
-```bash
-npm install
-npm test
-npm run build
-```
+## Contributing and license
 
-## Current Status
-
-FluxDOM is a prototype, not production framework code. Its value is in the engineering surface: compiler work, runtime design, package boundaries, build orchestration, and framework-level thinking.
-
-## Recent Hardening
-
-- Removed generated `.js`, `.d.ts`, `dist`, cache, and nested dependency artifacts from source control
-- Stabilized root test config so Vitest runs TypeScript source tests in `jsdom`
-- Fixed monorepo build sequencing with TypeScript project references
-- Added support for `{#if ...}{/if}` template blocks
-
-## Roadmap
-
-- Expand parser coverage for loops and nested directives
-- Add compiler fixture tests
-- Improve scoped CSS handling
-- Add a small interactive docs/demo page
-- Publish package-level API documentation
-
-## Author
-
-Onur Acar - <https://github.com/onuracar-dev>
+Read [CONTRIBUTING.md](./CONTRIBUTING.md). FluxDOM is MIT licensed.

@@ -1,4 +1,4 @@
-import { insert } from '../dom/operations';
+import { insert } from '../dom/operations.js';
 
 export function hydrate(root: HTMLElement, componentRenderFn: () => any) {
   // Full hydration:

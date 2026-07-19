@@ -1,13 +1,25 @@
 {
   "name": "@fluxdom/cli",
   "version": "0.1.0",
-  
-  "main": "dist/index.js",
+  "description": "Project scaffolding and Vite command wrappers for experimental FluxDOM apps.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": ["dist", "README.md", "LICENSE"],
+  "license": "MIT",
+  "author": "Onur Acar",
+  "repository": { "type": "git", "url": "git+https://github.com/onuracar-dev/FluxDOM.git", "directory": "packages/cli" },
+  "bugs": { "url": "https://github.com/onuracar-dev/FluxDOM/issues" },
+  "homepage": "https://fluxdom-6e1gb0.v2.appdeploy.ai/",
+  "engines": { "node": ">=20" },
+  "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org/", "provenance": true },
   "bin": {
     "flow": "dist/index.js"
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc -b",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {},
   "devDependencies": {

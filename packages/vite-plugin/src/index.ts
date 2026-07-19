@@ -31,7 +31,7 @@ export function flowPlugin(): Plugin {
       }
 
       try {
-        const { js, css, strategy } = compileSource(code, id);
+        const { js, css } = compileSource(code, id);
 
         // Store CSS for the virtual module loader
         if (css) {
@@ -40,7 +40,7 @@ export function flowPlugin(): Plugin {
 
         // Return the generated JS
         return {
-          code: js,
+          code: css ? `${js}\nimport ${JSON.stringify(`${id}.css`)};` : js,
           map: null, // Source maps are not fully implemented in prototype
         };
       } catch (err: any) {
@@ -51,7 +51,7 @@ export function flowPlugin(): Plugin {
       }
     },
     
-    handleHotUpdate({ file, server, read }) {
+    handleHotUpdate({ file, server }) {
       if (file.endsWith('.flow')) {
         // HMR implementation for the prototype
         // Tell Vite to fully reload the file

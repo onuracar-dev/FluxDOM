@@ -1,69 +1,70 @@
 <script>
-  let activeTab = 'intro';
-  
+  let activeTab = 'overview';
+
   function setTab(tab) {
     activeTab = tab;
   }
 </script>
 
 <template>
-  <div class="docs-container">
+  <div class="shell">
     <aside class="sidebar">
-      <h2>FluxDOM</h2>
-      <ul>
-        <li><button :class="activeTab === 'intro' ? 'active' : ''" @click="() => setTab('intro')">Introduction</button></li>
-        <li><button :class="activeTab === 'reactivity' ? 'active' : ''" @click="() => setTab('reactivity')">Reactivity</button></li>
-        <li><button :class="activeTab === 'rendering' ? 'active' : ''" @click="() => setTab('rendering')">Adaptive Rendering</button></li>
-      </ul>
+      <div class="brand">FluxDOM <span>0.1</span></div>
+      <p class="status">Experimental compiler-first UI framework.</p>
+      <nav aria-label="Documentation sections">
+        <button :class="activeTab === 'overview' ? 'active' : ''" @click="() => setTab('overview')">Overview</button>
+        <button :class="activeTab === 'syntax' ? 'active' : ''" @click="() => setTab('syntax')">Supported syntax</button>
+        <button :class="activeTab === 'limits' ? 'active' : ''" @click="() => setTab('limits')">Limitations</button>
+      </nav>
     </aside>
+
     <main class="content">
-      {#if activeTab === 'intro'}
-        <h1>Introduction</h1>
-        <p>FluxDOM is an adaptive rendering framework...</p>
+      {#if activeTab === 'overview'}
+        <p class="eyebrow">Compiler first · direct DOM · fine-grained signals</p>
+        <h1>A small laboratory for frontend framework ideas.</h1>
+        <p class="lede">FluxDOM turns <strong>.flow</strong> components into explicit DOM operations. It is honest prototype code: useful for exploring compiler and runtime boundaries, not yet a production dependency.</p>
+        <div class="grid">
+          <section><h2>Parser</h2><p>Validated element nesting, expressions, reactive bindings, and nested control blocks.</p></section>
+          <section><h2>Runtime</h2><p>Signals, computed state, effect cleanup, nested batching, and direct DOM helpers.</p></section>
+          <section><h2>Tooling</h2><p>A Vite transform, virtual scoped CSS, a real project scaffold, and static-safe SSR.</p></section>
+        </div>
       {/if}
-      {#if activeTab === 'reactivity'}
-        <h1>Reactivity</h1>
-        <p>FluxDOM uses fine-grained signals compiled to surgical DOM updates.</p>
+
+      {#if activeTab === 'syntax'}
+        <p class="eyebrow">Implemented today</p>
+        <h1>The deliberately small `.flow` subset.</h1>
+        <div class="code"><span>{`<button :class="active ? 'on' : ''" @click="increment">`}</span><span>{'  Count: {count}'}</span><span>{'</button>'}</span><span>{'{#each items as item, index} ... {/each}'}</span></div>
+        <p class="lede">Nested <strong>if</strong> and <strong>each</strong> blocks compile, but loops rerender their whole block and conditionals use a display wrapper.</p>
       {/if}
-      {#if activeTab === 'rendering'}
-        <h1>Adaptive Rendering</h1>
-        <p>FluxDOM automatically chooses between SSG, SSR, and CSR.</p>
+
+      {#if activeTab === 'limits'}
+        <p class="eyebrow">Production honesty</p>
+        <h1>What FluxDOM does not promise yet.</h1>
+        <div class="notice"><strong>Do not execute untrusted source.</strong> The script transform is a constrained prototype, hydration rerenders destructively, lifecycle hooks are placeholders, and full dynamic SSR is intentionally unavailable.</div>
+        <p class="lede">The safe SSR path serializes static templates without eval. Dynamic components receive a client-rendering mount point.</p>
       {/if}
     </main>
   </div>
 </template>
 
 <style scoped>
-  .docs-container {
-    display: flex;
-    min-height: 100vh;
-    font-family: system-ui, sans-serif;
-  }
-  .sidebar {
-    width: 250px;
-    background: #f4f4f5;
-    padding: 2rem;
-  }
-  .sidebar ul {
-    list-style: none;
-    padding: 0;
-  }
-  .sidebar button {
-    background: none;
-    border: none;
-    text-align: left;
-    width: 100%;
-    padding: 0.5rem;
-    cursor: pointer;
-    font-size: 1rem;
-    color: #4b5563;
-  }
-  .sidebar button.active {
-    color: #4f46e5;
-    font-weight: bold;
-  }
-  .content {
-    flex: 1;
-    padding: 2rem 4rem;
-  }
+  .shell { min-height: 100vh; color: #182033; background: #f7f8fc; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+  .sidebar { position: fixed; inset: 0 auto 0 0; width: 17rem; padding: 2rem 1.25rem; color: white; background: #15152b; }
+  .brand { font-size: 1.35rem; font-weight: 850; letter-spacing: -.03em; }
+  .brand span { margin-left: .35rem; color: #a9a1ff; font-size: .72rem; }
+  .status { color: #aaaec2; line-height: 1.55; }
+  nav { display: grid; gap: .35rem; margin-top: 2rem; }
+  nav button { border: 0; border-radius: .65rem; padding: .75rem .85rem; color: #b9bdd0; background: transparent; font: inherit; text-align: left; cursor: pointer; }
+  nav button.active { color: white; background: #302d57; }
+  .content { max-width: 68rem; margin-left: 17rem; padding: clamp(3rem, 8vw, 7rem); }
+  .eyebrow { color: #6555df; font-size: .75rem; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+  h1 { max-width: 14ch; margin: .45rem 0 1.2rem; font-size: clamp(2.5rem, 6vw, 5rem); letter-spacing: -.06em; line-height: .98; }
+  .lede { max-width: 47rem; color: #5c6478; font-size: 1.08rem; line-height: 1.75; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 2.5rem; }
+  .grid section, .notice, .code { padding: 1.25rem; border: 1px solid #dde0ed; border-radius: 1rem; background: white; box-shadow: 0 1rem 2.5rem rgba(32, 35, 70, .05); }
+  .grid h2 { margin-top: 0; }
+  .grid p { color: #656d80; line-height: 1.6; }
+  .code { display: grid; gap: .45rem; margin: 2rem 0; color: #5041bc; font-family: ui-monospace, monospace; overflow-x: auto; }
+  .notice { max-width: 48rem; margin: 2rem 0; color: #6f321f; border-color: #f1c8ba; background: #fff7f3; line-height: 1.65; }
+  @media (max-width: 760px) { .sidebar { position: static; width: auto; } .content { margin-left: 0; padding: 2rem 1.25rem; } .grid { grid-template-columns: 1fr; } }
 </style>

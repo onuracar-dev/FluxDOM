@@ -1,5 +1,5 @@
-import { createSignal } from './signal';
-import { createEffect } from './effect';
+import { createSignal } from './signal.js';
+import { createEffect } from './effect.js';
 
 export function createComputed<T>(fn: () => T): () => T {
   // We use a signal to store the computed value

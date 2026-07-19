@@ -19,13 +19,20 @@ export function compileSource(source: string, filename: string): CompileResult {
   
   let js = '';
   js += transformScript(analysis) + '\n';
-  js += transformTemplate(analysis) + '\n';
+  js += transformTemplate(analysis, component.style?.scoped ? hash : undefined) + '\n';
   js += `export const __flowStrategy = '${analysis.strategy}';\n`;
 
   let css = '';
   if (component.style) {
-    css = transformStyle(component.style.content, hash);
+    css = component.style.scoped
+      ? transformStyle(component.style.content, hash)
+      : component.style.content;
   }
 
   return { js, css, strategy: analysis.strategy };
 }
+
+export { parse, FlowParseError } from './parser/index.js';
+export type * from './parser/ast.js';
+export { analyze } from './analyzer/index.js';
+export type { ComponentAnalysis, RenderStrategy, ScriptAnalysis, TemplateAnalysis } from './analyzer/index.js';

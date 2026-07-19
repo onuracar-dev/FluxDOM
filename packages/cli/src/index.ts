@@ -1,15 +1,20 @@
 #!/usr/bin/env node
 
-import { create } from './commands/create';
-import { dev } from './commands/dev';
-import { build } from './commands/build';
+import { create } from './commands/create.js';
+import { dev } from './commands/dev.js';
+import { build } from './commands/build.js';
 
 const args = process.argv.slice(2);
 const command = args[0];
 
 switch (command) {
   case 'create':
-    create(args.slice(1));
+    try {
+      create(args.slice(1));
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : error);
+      process.exitCode = 1;
+    }
     break;
   case 'dev':
     dev(args.slice(1));

@@ -9,5 +9,6 @@
     { "path": "../compiler" },
     { "path": "../server" },
     { "path": "../runtime" }
-  ]
+  ],
+  "exclude": ["src/**/*.test.ts"]
 }

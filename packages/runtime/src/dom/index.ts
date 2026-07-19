@@ -1,3 +1,3 @@
-export * from './operations';
-export * from './events';
-export * from './lifecycle';
+export * from './operations.js';
+export * from './events.js';
+export * from './lifecycle.js';

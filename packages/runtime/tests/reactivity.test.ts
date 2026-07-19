@@ -51,4 +51,46 @@ describe('Reactivity', () => {
     expect(mockFn).toHaveBeenCalledTimes(2);
     expect(count()).toBe(3);
   });
+
+  it('removes dependencies that are no longer read', () => {
+    const [primary, setPrimary] = createSignal(true);
+    const [left, setLeft] = createSignal('left');
+    const [right, setRight] = createSignal('right');
+    const values: string[] = [];
+    createEffect(() => values.push(primary() ? left() : right()));
+
+    setPrimary(false);
+    setLeft('ignored');
+    setRight('used');
+    expect(values).toEqual(['left', 'right', 'used']);
+  });
+
+  it('runs cleanup once when an effect is stopped', () => {
+    const [count, setCount] = createSignal(0);
+    const events: string[] = [];
+    const stop = createEffect(() => {
+      const value = count();
+      events.push(`run:${value}`);
+      return () => events.push(`cleanup:${value}`);
+    });
+
+    setCount(1);
+    stop();
+    stop();
+    setCount(2);
+    expect(events).toEqual(['run:0', 'cleanup:0', 'run:1', 'cleanup:1']);
+  });
+
+  it('uses Object.is equality and flushes nested batches once', () => {
+    const [value, setValue] = createSignal(Number.NaN);
+    const effect = vi.fn(value);
+    createEffect(effect);
+    setValue(Number.NaN);
+    batch(() => {
+      setValue(1);
+      batch(() => setValue(2));
+    });
+    expect(effect).toHaveBeenCalledTimes(2);
+    expect(effect).toHaveLastReturnedWith(2);
+  });
 });

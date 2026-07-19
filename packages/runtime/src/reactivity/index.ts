@@ -1,4 +1,4 @@
-export * from './signal';
-export * from './effect';
-export * from './computed';
-export { batch } from './context';
+export * from './signal.js';
+export * from './effect.js';
+export * from './computed.js';
+export { batch } from './context.js';

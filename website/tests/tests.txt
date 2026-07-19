@@ -1,0 +1,28 @@
+# Tests
+
+## Test 1 - Framework story and playground load [sanity]
+Viewport: desktop (1280x800)
+Description: Verifies the product message and interactive model render successfully.
+Steps:
+1. Navigate to the app
+2. Confirm "Author components" is visible and navigate to "Playground"
+3. Confirm the preview contains "compiler" and "signals"
+Expected: FluxDOM's compiler-first story and populated playground are visible.
+
+## Test 2 - Empty playground input is guarded
+Viewport: desktop (1280x800)
+Description: Verifies blank items are not added to the preview.
+Steps:
+1. Navigate to the playground
+2. Clear the field labeled "New list item"
+3. Click "Add"
+Expected: The list remains unchanged and no blank list row appears.
+
+## Test 3 - Mobile navigation reaches roadmap
+Viewport: mobile (375x667)
+Description: Verifies the collapsed navigation remains usable on a narrow screen.
+Steps:
+1. Navigate to the app
+2. Tap the button labeled "Open navigation"
+3. Tap "Roadmap"
+Expected: Navigation closes and the heading "Useful now for learning" is visible.

@@ -1,25 +1,37 @@
 {
-  "name": "FluxDOM-monorepo",
+  "name": "fluxdom-monorepo",
   "version": "0.1.0",
   "description": "Experimental .flow component compiler and fine-grained DOM runtime.",
   "private": true,
+  "type": "module",
+  "license": "MIT",
+  "author": "Onur Acar",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/onuracar-dev/FluxDOM.git"
+  },
   "engines": {
-    "node": ">=18",
-    "pnpm": ">=8"
+    "node": ">=20.19.0",
+    "npm": ">=10"
   },
   "scripts": {
+    "clean": "node scripts/clean.mjs",
+    "prebuild": "npm run clean",
     "build": "tsc -b --force && npm run build --workspace docs && npm run build --workspace hello-world",
     "dev": "npm run dev --workspaces",
     "test": "vitest run",
-    "lint": "eslint .",
+    "typecheck": "tsc -b --pretty false",
+    "check": "npm test && npm run build",
+    "smoke:packages": "node scripts/smoke-packages.mjs",
     "format": "prettier --write \"**/*.{ts,js,json,md,html,css}\"",
-    "publish-all": "npm publish --workspaces --access public"
+    "pack:check": "node scripts/pack-packages.mjs",
+    "publish:packages": "node scripts/publish-packages.mjs"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "jsdom": "^24.0.0",
+    "@types/node": "^24.0.0",
+    "jsdom": "^29.1.1",
     "typescript": "^5.4.0",
-    "vitest": "^1.4.0"
+    "vitest": "^4.1.10"
   },
   "workspaces": [
     "packages/*",

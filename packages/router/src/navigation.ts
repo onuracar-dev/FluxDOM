@@ -1,13 +1,17 @@
 import { createSignal } from '@fluxdom/runtime';
-import { Route, RouteMatch, matchRoute } from './matcher';
+import { Route, matchRoute } from './matcher.js';
 
 let routes: Route[] = [];
 
 // Signal for current path so components can react to navigation
-const [currentPath, setCurrentPath] = createSignal(window.location.pathname);
+const initialPath = typeof window === 'undefined' ? '/' : window.location.pathname;
+const [currentPath, setCurrentPath] = createSignal(initialPath);
 const [currentParams, setCurrentParams] = createSignal<Record<string, string>>({});
 
 export function initRouter(appRoutes: Route[]) {
+  if (typeof window === 'undefined') {
+    throw new Error('@fluxdom/router can only be initialized in a browser');
+  }
   routes = appRoutes;
   
   // Handle popstate (back/forward buttons)
@@ -20,6 +24,9 @@ export function initRouter(appRoutes: Route[]) {
 }
 
 export function navigate(path: string, options: { replace?: boolean } = {}) {
+  if (typeof window === 'undefined') {
+    throw new Error('@fluxdom/router navigation requires a browser');
+  }
   if (options.replace) {
     window.history.replaceState(null, '', path);
   } else {

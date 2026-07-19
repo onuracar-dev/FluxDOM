@@ -1,7 +1,11 @@
 {
   "name": "@fluxdom/devtools",
   "version": "0.1.0",
-  
+  "description": "Unpublished FluxDOM DevTools experiment.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/onuracar-dev/FluxDOM.git", "directory": "packages/devtools" },
   "scripts": {
     "build": "tsc"
   },

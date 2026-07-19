@@ -1,14 +1,25 @@
 {
   "name": "@fluxdom/router",
   "version": "0.1.0",
-  
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "description": "Experimental client-side route matching primitives for FluxDOM.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "files": ["dist", "README.md", "LICENSE"],
+  "license": "MIT",
+  "author": "Onur Acar",
+  "repository": { "type": "git", "url": "git+https://github.com/onuracar-dev/FluxDOM.git", "directory": "packages/router" },
+  "bugs": { "url": "https://github.com/onuracar-dev/FluxDOM/issues" },
+  "homepage": "https://fluxdom-6e1gb0.v2.appdeploy.ai/",
+  "engines": { "node": ">=20" },
+  "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org/", "provenance": true },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc -b",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@fluxdom/runtime": "*"
+    "@fluxdom/runtime": "^0.1.0"
   },
   "devDependencies": {
     "typescript": "^5.4.0"

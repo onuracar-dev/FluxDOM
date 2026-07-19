@@ -1,12 +1,9 @@
-import { execSync } from 'child_process';
+import { runNpm } from './npm.js';
 
-export function dev(args: string[]) {
-  console.log(`🌊 Starting FluxDOM development server...`);
-  try {
-    // In reality this would run Vite programmatically
-    // For now we'll execute it as a shell command
-    execSync('npx vite', { stdio: 'inherit' });
-  } catch (err) {
-    console.error('Failed to start dev server', err);
-  }
+export function dev(args: string[]): void {
+  runVite(args);
+}
+
+function runVite(args: string[]): void {
+  runNpm(['exec', 'vite', '--', ...args]);
 }

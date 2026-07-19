@@ -1,18 +1,37 @@
 {
   "name": "@fluxdom/vite-plugin",
   "version": "0.1.0",
-  
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "description": "Vite transform plugin for experimental FluxDOM .flow components.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./ssr": { "types": "./dist/ssr.d.ts", "import": "./dist/ssr.js" }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "sideEffects": false,
+  "license": "MIT",
+  "author": "Onur Acar",
+  "repository": { "type": "git", "url": "git+https://github.com/onuracar-dev/FluxDOM.git", "directory": "packages/vite-plugin" },
+  "bugs": { "url": "https://github.com/onuracar-dev/FluxDOM/issues" },
+  "homepage": "https://fluxdom-6e1gb0.v2.appdeploy.ai/",
+  "engines": { "node": ">=20" },
+  "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org/", "provenance": true },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc -b",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@fluxdom/compiler": "*",
-    "@fluxdom/runtime": "*"
+    "@fluxdom/compiler": "^0.1.0",
+    "@fluxdom/runtime": "^0.1.0",
+    "@fluxdom/server": "^0.1.0"
+  },
+  "peerDependencies": {
+    "vite": "^8.0.0"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
-    "vite": "^5.2.0"
+    "vite": "^8.1.5"
   }
 }

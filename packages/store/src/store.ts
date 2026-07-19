@@ -1,5 +1,5 @@
 import { createSignal } from '@fluxdom/runtime';
-import { persistState } from './persist';
+import { persistState } from './persist.js';
 
 export interface StoreConfig<T> {
   name: string;

@@ -1,12 +1,18 @@
-import { setActiveEffect, activeEffect } from './context';
+import { setActiveEffect, activeEffect } from './context.js';
 
 export function createEffect(fn: () => void | (() => void)): () => void {
   let cleanup: (() => void) | void;
+  let active = true;
+  let running = false;
 
   const effectFn = () => {
+    if (!active || running) return;
+    running = true;
     // 1. Run user cleanup
     if (cleanup) {
-      cleanup();
+      const previousCleanup = cleanup;
+      cleanup = undefined;
+      previousCleanup();
     }
     
     // 2. Clear old signal subscriptions to prevent memory leaks
@@ -20,9 +26,11 @@ export function createEffect(fn: () => void | (() => void)): () => void {
     const previousEffect = activeEffect;
     setActiveEffect(effectFn);
     try {
-      cleanup = fn();
+      const result = fn();
+      cleanup = typeof result === 'function' ? result : undefined;
     } finally {
       setActiveEffect(previousEffect);
+      running = false;
     }
   };
 
@@ -34,7 +42,13 @@ export function createEffect(fn: () => void | (() => void)): () => void {
 
   // Return a way to completely destroy the effect
   return () => {
-    if (cleanup) cleanup();
+    if (!active) return;
+    active = false;
+    if (cleanup) {
+      const finalCleanup = cleanup;
+      cleanup = undefined;
+      finalCleanup();
+    }
     if ((effectFn as any).dependencies) {
       for (const subscribers of (effectFn as any).dependencies) {
         subscribers.delete(effectFn);

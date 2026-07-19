@@ -1,4 +1,4 @@
-import { activeEffect, batchedEffects, batchDepth } from './context';
+import { activeEffect, batchedEffects, batchDepth } from './context.js';
 
 // We need to export a way for effects to subscribe to signals
 // And for signals to track which effects are subscribed
@@ -27,7 +27,7 @@ export function createSignal<T>(initialValue: T): [() => T, (newValue: T) => voi
   };
 
   const set = (newValue: T) => {
-    if (value !== newValue) {
+    if (!Object.is(value, newValue)) {
       value = newValue;
       if (batchDepth > 0) {
         subscribers.forEach(sub => batchedEffects.add(sub));
