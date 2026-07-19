@@ -11,7 +11,7 @@
   "author": "Onur Acar",
   "repository": { "type": "git", "url": "git+https://github.com/onuracar-dev/FluxDOM.git", "directory": "packages/cli" },
   "bugs": { "url": "https://github.com/onuracar-dev/FluxDOM/issues" },
-  "homepage": "https://fluxdom-6e1gb0.v2.appdeploy.ai/",
+  "homepage": "https://fluxdom.onuracar-work.workers.dev/",
   "engines": { "node": ">=20" },
   "publishConfig": { "access": "public", "registry": "https://registry.npmjs.org/", "provenance": true },
   "bin": {

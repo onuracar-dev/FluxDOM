@@ -4,7 +4,7 @@ Experimental `.flow` component compiler and fine-grained DOM runtime.
 
 <img src="./docs/assets/preview.svg" alt="FluxDOM architecture preview">
 
-[Live website](https://fluxdom-6e1gb0.v2.appdeploy.ai/) · [GitHub repository](https://github.com/onuracar-dev/FluxDOM)
+[Live website](https://fluxdom.onuracar-work.workers.dev/) · [GitHub repository](https://github.com/onuracar-dev/FluxDOM)
 
 FluxDOM explores a compiler-first frontend model: parse a single-file
 component, analyze its behavior, generate direct DOM operations, and let small
