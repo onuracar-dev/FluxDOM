@@ -1,5 +1,8 @@
+import { parseExpression as babelParseExpression } from '@babel/parser';
 import type { ComponentAnalysis } from '../analyzer/index.js';
 import type { EachBlockNode, ElementNode, ExpressionNode, IfBlockNode, TemplateNode, TextNode } from '../parser/ast.js';
+import { FlowParseError } from '../parser/index.js';
+import { rewriteAst } from './ast-rewriter.js';
 
 export function transformTemplate(analysis: ComponentAnalysis, scopeHash?: string): string {
   const { component } = analysis;
@@ -133,38 +136,29 @@ export function transformTemplate(analysis: ComponentAnalysis, scopeHash?: strin
   return `${importStatement}\nexport function render() {\n${domOperations.map((operation) => indent(operation, 2)).join('\n')}\n  return ${result};\n}`;
 }
 
-function transformExpression(expression: string, analysis: ComponentAnalysis, locals: Set<string>): string {
-  const signals = new Set(Array.from(analysis.scriptAnalysis.signals).filter((signal) => !locals.has(signal)));
-  let result = '';
-  let cursor = 0;
-  while (cursor < expression.length) {
-    const character = expression[cursor];
-    if (character === '"' || character === "'" || character === '`') {
-      const start = cursor;
-      cursor += 1;
-      while (cursor < expression.length) {
-        if (expression[cursor] === character && expression[cursor - 1] !== '\\') {
-          cursor += 1;
-          break;
-        }
-        cursor += 1;
-      }
-      result += expression.slice(start, cursor);
-      continue;
-    }
-    if (/[A-Za-z_$]/.test(character)) {
-      const start = cursor;
-      cursor += 1;
-      while (cursor < expression.length && /[\w$]/.test(expression[cursor])) cursor += 1;
-      const identifier = expression.slice(start, cursor);
-      const propertyAccess = expression[start - 1] === '.';
-      result += signals.has(identifier) && !propertyAccess ? `__${identifier}()` : identifier;
-      continue;
-    }
-    result += character;
-    cursor += 1;
+function transformExpression(
+  expression: string,
+  analysis: ComponentAnalysis,
+  locals: Set<string>,
+): string {
+  if (!expression.trim()) return expression;
+  const filename = analysis.component.filename ?? 'unknown.flow';
+
+  let ast: any;
+  try {
+    ast = babelParseExpression(expression, {
+      plugins: ['typescript'],
+    });
+  } catch (err: any) {
+    if (err instanceof FlowParseError) throw err;
+    const loc = err.loc ? ` (${err.loc.line}:${err.loc.column})` : '';
+    throw new FlowParseError(`${err.message}${loc}`, filename);
   }
-  return result;
+
+  return rewriteAst(ast, expression, analysis.scriptAnalysis.signals, filename, {
+    isScript: false,
+    initialScope: locals,
+  });
 }
 
 function indent(source: string, spaces: number): string {

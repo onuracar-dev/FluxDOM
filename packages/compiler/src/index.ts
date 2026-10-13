@@ -13,12 +13,12 @@ export interface CompileResult {
 
 export function compileSource(source: string, filename: string): CompileResult {
   const component = parse(source, filename);
-  const analysis = analyze(component);
+  const analysis = analyze(component, filename);
 
   const hash = createHash('md5').update(filename).digest('hex').substring(0, 8);
   
   let js = '';
-  js += transformScript(analysis) + '\n';
+  js += transformScript(analysis, filename) + '\n';
   js += transformTemplate(analysis, component.style?.scoped ? hash : undefined) + '\n';
   js += `export const __flowStrategy = '${analysis.strategy}';\n`;
 

@@ -52,7 +52,7 @@ export function parse(source: string, filename = 'unknown.flow'): FlowComponent 
     ? { children: parseTemplate(templateSource.content, filename) }
     : null;
 
-  return { script, style, template };
+  return { script, style, template, filename };
 }
 
 function extractBlock(source: string, tag: string, filename: string): SourceBlock | null {

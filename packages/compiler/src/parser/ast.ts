@@ -2,6 +2,7 @@ export interface FlowComponent {
   script: ScriptBlock | null;
   template: TemplateBlock | null;
   style: StyleBlock | null;
+  filename?: string;
 }
 export interface ScriptBlock { content: string; lang?: string; }
 export interface StyleBlock { content: string; scoped: boolean; }

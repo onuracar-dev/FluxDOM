@@ -1,5 +1,5 @@
 import type { FlowComponent, TemplateNode } from '../parser/ast.js';
-import { detectSignals } from './signal-detector.js';
+import { detectSignalsFromAst, parseScriptAst } from './signal-detector.js';
 
 export type RenderStrategy = 'SSG' | 'SSR' | 'CSR';
 
@@ -7,6 +7,7 @@ export interface ScriptAnalysis {
   signals: Set<string>;
   hasAsync: boolean;
   hasSideEffects: boolean;
+  ast?: any;
 }
 
 export interface ComponentAnalysis {
@@ -23,9 +24,15 @@ export interface TemplateAnalysis {
   hasExpressions: boolean;
 }
 
-export function analyze(component: FlowComponent): ComponentAnalysis {
+export function analyze(component: FlowComponent, filename: string = component.filename ?? 'unknown.flow'): ComponentAnalysis {
   const scriptContent = component.script?.content || '';
-  const signals = detectSignals(scriptContent);
+  let ast: any = null;
+  let signals = new Set<string>();
+  if (scriptContent.trim()) {
+    ast = parseScriptAst(scriptContent, filename);
+    signals = detectSignalsFromAst(ast);
+  }
+
   const hasAsync = /await\s|fetch\(/.test(scriptContent);
   const hasSideEffects = /window\.|document\.|localStorage/.test(scriptContent);
   const templateAnalysis: TemplateAnalysis = {
@@ -48,7 +55,7 @@ export function analyze(component: FlowComponent): ComponentAnalysis {
 
   return {
     component,
-    scriptAnalysis: { signals, hasAsync, hasSideEffects },
+    scriptAnalysis: { signals, hasAsync, hasSideEffects, ast },
     templateAnalysis,
     strategy
   };
