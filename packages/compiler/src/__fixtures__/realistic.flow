@@ -1,0 +1,39 @@
+<script lang="ts">
+  let count = 0;
+  let items = ['alpha', 'beta'];
+  let config = { theme: 'dark' };
+
+  function reset(count: number) {
+    return count;
+  }
+
+  const addItem = (item: string) => {
+    count++;
+    items = [...items, item];
+  };
+
+  for (const item of items) {
+    console.log(item);
+  }
+
+  const helper = {
+    count,
+    format() {
+      return 'count';
+    }
+  };
+</script>
+
+<template>
+  <div :data-theme="config.theme">
+    {#if count > 0}
+      <p>Count is positive</p>
+    {/if}
+    <ul>
+      {#each items as item, index}
+        <li :data-index="index">{item}</li>
+      {/each}
+    </ul>
+    <button @click="() => addItem('gamma')">Add</button>
+  </div>
+</template>

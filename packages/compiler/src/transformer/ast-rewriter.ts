@@ -93,6 +93,14 @@ function findSignalInPattern(pattern: any, signals: Set<string>, scope: Scope): 
   return null;
 }
 
+const TS_EXPRESSION_NODES = new Set([
+  'TSAsExpression',
+  'TSTypeAssertion',
+  'TSNonNullExpression',
+  'TSSatisfiesExpression',
+  'TSInstantiationExpression',
+]);
+
 export function rewriteAst(
   ast: any,
   sourceCode: string,
@@ -106,16 +114,51 @@ export function rewriteAst(
   function walk(node: any, scope: Scope, isTopLevelStmt = false): void {
     if (!node || typeof node !== 'object') return;
 
-    // TypeScript types: skip type annotations
+    // TypeScript nodes: skip pure type annotations, walk runtime expressions
     if (typeof node.type === 'string' && node.type.startsWith('TS')) {
-      if (node.type === 'TSAsExpression' || node.type === 'TSTypeAssertion') {
+      if (TS_EXPRESSION_NODES.has(node.type) && node.expression) {
         walk(node.expression, scope);
+      }
+      return;
+    }
+
+    if (node.type === 'ExportNamedDeclaration') {
+      if (node.declaration?.type === 'VariableDeclaration' && node.declaration.kind === 'let') {
+        const firstDecl = node.declaration.declarations[0];
+        const name = firstDecl?.id?.name ?? 'unknown';
+        throw new FlowParseError(
+          `Signals cannot be exported from a .flow script ('${name}'). Move shared state to @fluxdom/store.`,
+          filename,
+        );
+      }
+      if (Array.isArray(node.specifiers)) {
+        for (const spec of node.specifiers) {
+          const localName = spec.local?.name;
+          if (localName && signals.has(localName)) {
+            throw new FlowParseError(
+              `Signals cannot be exported from a .flow script ('${localName}'). Move shared state to @fluxdom/store.`,
+              filename,
+            );
+          }
+        }
+      }
+      if (node.declaration) {
+        walk(node.declaration, scope, false);
       }
       return;
     }
 
     if (node.type === 'VariableDeclaration') {
       if (options.isScript && isTopLevelStmt && node.kind === 'let') {
+        for (const decl of node.declarations) {
+          if (!decl.id || decl.id.type !== 'Identifier') {
+            throw new FlowParseError(
+              'Destructuring in a top-level let is not supported. Declare each signal separately: let a = obj.a;',
+              filename,
+            );
+          }
+        }
+
         // Transform init expressions of declarators first
         for (const decl of node.declarations) {
           if (decl.init) {
@@ -286,6 +329,55 @@ export function rewriteAst(
       return;
     }
 
+    if (node.type === 'ObjectMethod') {
+      if (node.computed) {
+        walk(node.key, scope);
+      }
+      const methodScope = new Scope(scope);
+      for (const param of node.params) {
+        collectPatternBindings(param, methodScope.bindings);
+      }
+      if (node.body?.body) {
+        hoistBlockBindings(node.body.body, methodScope);
+      }
+      walk(node.body, methodScope);
+      return;
+    }
+
+    if (node.type === 'ClassMethod' || node.type === 'ClassPrivateMethod') {
+      if (node.computed) {
+        walk(node.key, scope);
+      }
+      const methodScope = new Scope(scope);
+      for (const param of node.params) {
+        collectPatternBindings(param, methodScope.bindings);
+      }
+      if (node.body?.body) {
+        hoistBlockBindings(node.body.body, methodScope);
+      }
+      walk(node.body, methodScope);
+      return;
+    }
+
+    if (node.type === 'ClassProperty' || node.type === 'ClassPrivateProperty') {
+      if (node.computed) {
+        walk(node.key, scope);
+      }
+      if (node.value) {
+        walk(node.value, scope);
+      }
+      return;
+    }
+
+    if (node.type === 'LabeledStatement') {
+      walk(node.body, scope);
+      return;
+    }
+
+    if (node.type === 'BreakStatement' || node.type === 'ContinueStatement') {
+      return;
+    }
+
     if (node.type === 'ObjectProperty') {
       if (node.shorthand && node.key.type === 'Identifier') {
         const name = node.key.name;
@@ -301,7 +393,7 @@ export function rewriteAst(
       return;
     }
 
-    if (node.type === 'MemberExpression') {
+    if (node.type === 'MemberExpression' || node.type === 'OptionalMemberExpression') {
       walk(node.object, scope);
       if (node.computed) {
         walk(node.property, scope);

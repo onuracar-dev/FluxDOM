@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parse as babelParse } from '@babel/parser';
 import { compileSource, FlowParseError, parse } from './index.js';
@@ -148,6 +150,125 @@ describe('Flow compiler', () => {
   it('throws FlowParseError with line and column on syntax error in script', () => {
     expect(() => compileSource(`<script>let count = ;</script>`, 'broken.flow'))
       .toThrow(/broken\.flow:.*\(1:\d+\)/);
+  });
+
+  // Revision items 1 - 12
+  it('does not rewrite object method keys matching signal name', () => {
+    const result = compileSource(`<script>let count = 0; const o = { count() { return 1; } };</script>`, 'test.flow');
+    expect(result.js).toContain('count() { return 1; }');
+    expect(result.js).not.toContain('__count()()');
+    expect(() => babelParse(result.js, { sourceType: 'module', plugins: ['typescript'] })).not.toThrow();
+  });
+
+  it('preserves shadowed signal name inside class method parameters', () => {
+    const result = compileSource(`<script>let count = 0; class A { m(count) { return count; } }</script>`, 'test.flow');
+    expect(result.js).toContain('m(count) { return count; }');
+    expect(result.js).not.toContain('m(__count())');
+    expect(() => babelParse(result.js, { sourceType: 'module', plugins: ['typescript'] })).not.toThrow();
+  });
+
+  it('does not rewrite class property key matching signal name', () => {
+    const result = compileSource(`<script>let count = 0; class A { count = 1; }</script>`, 'test.flow');
+    expect(result.js).toContain('count = 1;');
+    expect(result.js).not.toContain('__count() = 1;');
+    expect(() => babelParse(result.js, { sourceType: 'module', plugins: ['typescript'] })).not.toThrow();
+  });
+
+  it('rewrites signal references inside class property values', () => {
+    const result = compileSource(`<script>let count = 0; class A { x = count; }</script>`, 'test.flow');
+    expect(result.js).toContain('x = __count();');
+    expect(() => babelParse(result.js, { sourceType: 'module', plugins: ['typescript'] })).not.toThrow();
+  });
+
+  it('does not rewrite statement labels matching signal name', () => {
+    const result = compileSource(`<script>let count = 0; count: for (;;) { break count; }</script>`, 'test.flow');
+    expect(result.js).toContain('count: for (;;)');
+    expect(result.js).toContain('break count;');
+    expect(result.js).not.toContain('__count():');
+    expect(result.js).not.toContain('break __count();');
+    expect(() => babelParse(result.js, { sourceType: 'module', plugins: ['typescript'] })).not.toThrow();
+  });
+
+  it('does not rewrite non-computed optional member access', () => {
+    const result = compileSource(`<script>let count = 0; const val = o?.count;</script>`, 'test.flow');
+    expect(result.js).toContain('o?.count');
+    expect(result.js).not.toContain('o?.__count()');
+    expect(() => babelParse(result.js, { sourceType: 'module', plugins: ['typescript'] })).not.toThrow();
+  });
+
+  it('rewrites computed optional member access', () => {
+    const result = compileSource(`<script>let count = 0; const val = o?.[count];</script>`, 'test.flow');
+    expect(result.js).toContain('o?.[__count()]');
+    expect(() => babelParse(result.js, { sourceType: 'module', plugins: ['typescript'] })).not.toThrow();
+  });
+
+  it('rewrites signal in TSNonNullExpression', () => {
+    const result = compileSource(`<script lang="ts">let count = 0; const y = count!;</script>`, 'test.flow');
+    expect(result.js).toContain('const y = __count()!;');
+    expect(() => babelParse(result.js, { sourceType: 'module', plugins: ['typescript'] })).not.toThrow();
+  });
+
+  it('rewrites signal in TSSatisfiesExpression', () => {
+    const result = compileSource(`<script lang="ts">let count = 0; const y = count satisfies number;</script>`, 'test.flow');
+    expect(result.js).toContain('const y = __count() satisfies number;');
+    expect(() => babelParse(result.js, { sourceType: 'module', plugins: ['typescript'] })).not.toThrow();
+  });
+
+  it('rewrites signal in TSAsExpression (regression test)', () => {
+    const result = compileSource(`<script lang="ts">let count = 0; const y = count as number;</script>`, 'test.flow');
+    expect(result.js).toContain('const y = __count() as number;');
+    expect(() => babelParse(result.js, { sourceType: 'module', plugins: ['typescript'] })).not.toThrow();
+  });
+
+  it('throws FlowParseError on top-level let destructuring', () => {
+    expect(() => compileSource(`<script>let { a } = obj;</script>`, 'test.flow'))
+      .toThrowError(new FlowParseError('Destructuring in a top-level let is not supported. Declare each signal separately: let a = obj.a;', 'test.flow'));
+
+    expect(() => compileSource(`<script>let [a, b] = arr;</script>`, 'test.flow'))
+      .toThrowError(new FlowParseError('Destructuring in a top-level let is not supported. Declare each signal separately: let a = obj.a;', 'test.flow'));
+  });
+
+  it('throws FlowParseError when exporting signals', () => {
+    expect(() => compileSource(`<script>let count = 0; export { count };</script>`, 'test.flow'))
+      .toThrowError(new FlowParseError("Signals cannot be exported from a .flow script ('count'). Move shared state to @fluxdom/store.", 'test.flow'));
+
+    expect(() => compileSource(`<script>export let count = 0;</script>`, 'test.flow'))
+      .toThrowError(new FlowParseError("Signals cannot be exported from a .flow script ('count'). Move shared state to @fluxdom/store.", 'test.flow'));
+  });
+
+  it('allows non-signal exports to pass through', () => {
+    const result = compileSource(`<script>export const x = 1; export function f() { return 2; }</script>`, 'test.flow');
+    expect(result.js).toContain('export const x = 1;');
+    expect(result.js).toContain('export function f() { return 2; }');
+    expect(() => babelParse(result.js, { sourceType: 'module', plugins: ['typescript'] })).not.toThrow();
+  });
+
+  it('compiles realistic component fixture with mixed signals, loops, methods, and directives', () => {
+    const fixturePath = join(process.cwd(), 'packages/compiler/src/__fixtures__/realistic.flow');
+    const source = readFileSync(fixturePath, 'utf-8');
+    const result = compileSource(source, 'realistic.flow');
+
+    // 1. Output is valid JavaScript syntax
+    expect(() => babelParse(result.js, { sourceType: 'module', plugins: ['typescript'] })).not.toThrow();
+
+    // 2. Signals correctly declared
+    expect(result.js).toContain('const [__count, __setCount] = createSignal(0);');
+    expect(result.js).toContain("const [__items, __setItems] = createSignal(['alpha', 'beta']);");
+    expect(result.js).toContain("const [__config, __setConfig] = createSignal({ theme: 'dark' });");
+
+    // 3. Signal writes and reads transformed
+    expect(result.js).toContain('__setCount(__count() + 1);');
+    expect(result.js).toContain('__setItems([...__items(), item]);');
+    expect(result.js).toContain('count: __count()');
+    expect(result.js).toContain('__count() > 0');
+    expect(result.js).toContain('__config().theme');
+    expect(result.js).toContain('__items()');
+
+    // 4. Method name and shadowed parameter NOT transformed
+    expect(result.js).toContain('function reset(count: number)');
+    expect(result.js).not.toContain('function reset(__count');
+    expect(result.js).toContain('format() {');
+    expect(result.js).not.toContain('__format()');
   });
 });
 

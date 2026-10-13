@@ -30,7 +30,7 @@ export function analyze(component: FlowComponent, filename: string = component.f
   let signals = new Set<string>();
   if (scriptContent.trim()) {
     ast = parseScriptAst(scriptContent, filename);
-    signals = detectSignalsFromAst(ast);
+    signals = detectSignalsFromAst(ast, filename);
   }
 
   const hasAsync = /await\s|fetch\(/.test(scriptContent);
