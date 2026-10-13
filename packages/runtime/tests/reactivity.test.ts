@@ -139,4 +139,17 @@ describe('Reactivity', () => {
       });
     }).toThrow('FluxDOM: effect re-triggered itself more than 100 times');
   });
+
+  it('avoids diamond dependency glitches in computed signals', () => {
+    const [a, setA] = createSignal(1);
+    const b = createComputed(() => a() * 2);
+    const c = createComputed(() => a() * 3);
+    const d = createComputed(() => b() + c());
+    const seen: number[] = [];
+    createEffect(() => {
+      seen.push(d());
+    });
+    setA(2);
+    expect(seen).toEqual([5, 10]); // bugünkü kodda [5, 8, 10] çıkıyor
+  });
 });

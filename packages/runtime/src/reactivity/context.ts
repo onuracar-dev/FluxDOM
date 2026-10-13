@@ -1,6 +1,7 @@
 export interface ReactiveEffect {
   (): void;
   dependencies: Set<Set<ReactiveEffect>>;
+  markDirty?(): void;
 }
 
 export let activeEffect: ReactiveEffect | null = null;
@@ -9,6 +10,14 @@ export let batchedEffects = new Set<ReactiveEffect>();
 
 export function setActiveEffect(effect: ReactiveEffect | null): void {
   activeEffect = effect;
+}
+
+export function notifySubscriber(sub: ReactiveEffect): void {
+  if (sub.markDirty) {
+    sub.markDirty();
+  } else {
+    batchedEffects.add(sub);
+  }
 }
 
 export function batch(fn: () => void): void {

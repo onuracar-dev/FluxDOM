@@ -1,15 +1,43 @@
-import { createSignal } from './signal.js';
-import { createEffect } from './effect.js';
+import { activeEffect, batch, notifySubscriber, setActiveEffect, type ReactiveEffect } from './context.js';
 
 export function createComputed<T>(fn: () => T): () => T {
-  // We use a signal to store the computed value
-  // This allows the computed itself to be tracked by other effects
-  const [get, set] = createSignal<T | undefined>(undefined);
+  let value: T | undefined;
+  let dirty = true;
+  const subscribers = new Set<ReactiveEffect>();
 
-  createEffect(() => {
-    // Whenever dependencies of fn change, this effect will re-run
-    set(fn());
-  });
+  const computedConsumer: ReactiveEffect = (() => {}) as ReactiveEffect;
+  computedConsumer.dependencies = new Set<Set<ReactiveEffect>>();
+  computedConsumer.markDirty = () => {
+    if (!dirty) {
+      dirty = true;
+      batch(() => {
+        subscribers.forEach(sub => notifySubscriber(sub));
+      });
+    }
+  };
 
-  return () => get() as T;
+  return () => {
+    if (activeEffect) {
+      subscribers.add(activeEffect);
+      activeEffect.dependencies.add(subscribers);
+    }
+
+    if (dirty) {
+      for (const depSubscribers of computedConsumer.dependencies) {
+        depSubscribers.delete(computedConsumer);
+      }
+      computedConsumer.dependencies.clear();
+
+      const previousEffect = activeEffect;
+      setActiveEffect(computedConsumer);
+      try {
+        value = fn();
+        dirty = false;
+      } finally {
+        setActiveEffect(previousEffect);
+      }
+    }
+
+    return value as T;
+  };
 }

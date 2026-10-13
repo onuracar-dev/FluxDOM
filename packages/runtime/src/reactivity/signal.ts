@@ -1,4 +1,4 @@
-import { activeEffect, batchedEffects, batchDepth, type ReactiveEffect } from './context.js';
+import { activeEffect, batch, notifySubscriber, type ReactiveEffect } from './context.js';
 
 export function createSignal<T>(initialValue: T): [() => T, (newValue: T) => void] {
   let value = initialValue;
@@ -20,12 +20,9 @@ export function createSignal<T>(initialValue: T): [() => T, (newValue: T) => voi
   const set = (newValue: T) => {
     if (!Object.is(value, newValue)) {
       value = newValue;
-      if (batchDepth > 0) {
-        subscribers.forEach(sub => batchedEffects.add(sub));
-      } else {
-        const effectsToRun = new Set(subscribers);
-        effectsToRun.forEach(effect => effect());
-      }
+      batch(() => {
+        subscribers.forEach(sub => notifySubscriber(sub));
+      });
     }
   };
 
