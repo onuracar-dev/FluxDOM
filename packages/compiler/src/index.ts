@@ -3,7 +3,7 @@ import { analyze, RenderStrategy } from './analyzer/index.js';
 import { transformScript } from './transformer/signal-transform.js';
 import { transformTemplate } from './transformer/template-transform.js';
 import { transformStyle } from './transformer/style-transform.js';
-import { createHash } from 'crypto';
+import { hashFilename } from './hash.js';
 
 export interface CompileResult {
   js: string;
@@ -15,7 +15,7 @@ export function compileSource(source: string, filename: string): CompileResult {
   const component = parse(source, filename);
   const analysis = analyze(component, filename);
 
-  const hash = createHash('md5').update(filename).digest('hex').substring(0, 8);
+  const hash = hashFilename(filename);
   
   let js = '';
   js += transformScript(analysis, filename) + '\n';
@@ -36,3 +36,4 @@ export { parse, FlowParseError } from './parser/index.js';
 export type * from './parser/ast.js';
 export { analyze } from './analyzer/index.js';
 export type { ComponentAnalysis, RenderStrategy, ScriptAnalysis, TemplateAnalysis } from './analyzer/index.js';
+export { hashFilename } from './hash.js';
