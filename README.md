@@ -78,18 +78,18 @@ are not ready for independent distribution.
 
 ## Supported boundary and known limitations
 
-- The script transform recognizes a deliberately small top-level `let` subset;
-  it is not a general JavaScript/TypeScript AST transform yet.
-- `{#each}` rerenders its block when the collection signal changes. It does not
-  perform keyed reconciliation.
+- The script transform is AST-based (`@babel/parser`). Only top-level `let` declarations inside `<script>` are compiled into reactive signals (`createSignal`).
+- Variables declared inside functions, blocks, or loops are standard local variables and shadow signals with the same name.
+- Top-level destructuring `let` declarations (e.g. `let { a } = obj;`, `let [a, b] = arr;`) are not supported; declare each signal individually (`let a = obj.a;`).
+- Signals cannot be exported directly from a `.flow` script (`export { count }` or `export let count = 0;`). Move shared state to `@fluxdom/store`.
+- Destructuring assignment targets to signals (`[count] = arr` or `({ count } = obj)`) are not supported.
+- Suffix and prefix increment/decrement expressions (`x++`, `++x`, `x--`, `--x`) transform to setter calls (`__setX(__x() ± 1)`); when used inside complex expressions, the return value difference between prefix and postfix is not preserved.
+- `{#each}` rerenders its block when the collection signal changes. It does not perform keyed reconciliation.
 - `{#if}` uses a display wrapper rather than structural mount/unmount semantics.
-- Scoped CSS handles ordinary flat selectors. Complex nested at-rules and
-  `:global(...)` behavior need broader fixture coverage.
+- Scoped CSS handles ordinary flat selectors. Complex nested at-rules and `:global(...)` behavior need broader fixture coverage.
 - Hydration is currently destructive client rerendering.
-- Static SSR never evaluates component source. Dynamic templates return a
-  client-render mount point; full SSR is not implemented.
-- Router mounting, nested routes, lifecycle hooks, source maps, and fine-grained
-  HMR remain roadmap work.
+- Static SSR never evaluates component source. Dynamic templates return a client-render mount point; full SSR is not implemented.
+- Router mounting, nested routes, lifecycle hooks, source maps, and fine-grained HMR remain roadmap work.
 
 Do not compile and execute untrusted `.flow` source. See [SECURITY.md](./SECURITY.md).
 
