@@ -17,19 +17,55 @@ chrome.devtools.panels.create(
     
     function render() {
       if (!root) return;
-      root.innerHTML = `
-        <div>
-          <strong>Active Components:</strong>
-          <ul class="tree">
-            ${components.length ? components.map(c => `<li>&lt;${c}&gt; <span style="color:#a78bfa">[Mounted]</span></li>`).join('') : '<li>Waiting for components...</li>'}
-          </ul>
-          <br/>
-          <strong>Active Signals (Raw Values):</strong>
-          <ul class="tree">
-            ${signals.length ? signals.map((s, i) => `<li>Signal ${i}: ${JSON.stringify(s)}</li>`).join('') : '<li>No signals found</li>'}
-          </ul>
-        </div>
-      `;
+      root.replaceChildren();
+
+      const container = document.createElement('div');
+
+      const compTitle = document.createElement('strong');
+      compTitle.textContent = 'Active Components:';
+      container.appendChild(compTitle);
+
+      const compList = document.createElement('ul');
+      compList.className = 'tree';
+      if (components.length > 0) {
+        for (const c of components) {
+          const li = document.createElement('li');
+          li.textContent = `<${c}> `;
+          const badge = document.createElement('span');
+          badge.style.color = '#a78bfa';
+          badge.textContent = '[Mounted]';
+          li.appendChild(badge);
+          compList.appendChild(li);
+        }
+      } else {
+        const li = document.createElement('li');
+        li.textContent = 'Waiting for components...';
+        compList.appendChild(li);
+      }
+      container.appendChild(compList);
+
+      container.appendChild(document.createElement('br'));
+
+      const sigTitle = document.createElement('strong');
+      sigTitle.textContent = 'Active Signals (Raw Values):';
+      container.appendChild(sigTitle);
+
+      const sigList = document.createElement('ul');
+      sigList.className = 'tree';
+      if (signals.length > 0) {
+        signals.forEach((s, i) => {
+          const li = document.createElement('li');
+          li.textContent = `Signal ${i}: ${JSON.stringify(s)}`;
+          sigList.appendChild(li);
+        });
+      } else {
+        const li = document.createElement('li');
+        li.textContent = 'No signals found';
+        sigList.appendChild(li);
+      }
+      container.appendChild(sigList);
+
+      root.appendChild(container);
     }
     
     // Simulate receiving data from bridge.ts via chrome background

@@ -7,12 +7,9 @@ export function createSignal<T>(initialValue: T): [() => T, (newValue: T) => voi
   let value = initialValue;
   const subscribers = new Set<() => void>();
   
-  if (typeof window !== 'undefined') {
-    const win = window as any;
-    if (!win.__FluxDOM_SIGNALS__) win.__FluxDOM_SIGNALS__ = [];
-    win.__FluxDOM_SIGNALS__.push({ get: () => value });
-    
-    window.dispatchEvent(new CustomEvent('__FluxDOM_SIGNAL_CREATED__'));
+  const hook = (globalThis as any).__FLUXDOM_DEVTOOLS_HOOK__;
+  if (hook) {
+    hook.onSignalCreated({ get: () => value });
   }
 
   const get = () => {

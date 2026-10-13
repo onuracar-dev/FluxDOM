@@ -93,4 +93,31 @@ describe('Reactivity', () => {
     expect(effect).toHaveBeenCalledTimes(2);
     expect(effect).toHaveLastReturnedWith(2);
   });
+
+  it('does not leak signals to globalThis.__FluxDOM_SIGNALS__ when devtools hook is not registered', () => {
+    delete (globalThis as any).__FluxDOM_SIGNALS__;
+    delete (globalThis as any).__FLUXDOM_DEVTOOLS_HOOK__;
+
+    for (let i = 0; i < 1000; i++) {
+      createSignal(i);
+    }
+
+    expect((globalThis as any).__FluxDOM_SIGNALS__).toBeUndefined();
+  });
+
+  it('calls hook.onSignalCreated once per signal when devtools hook is defined', () => {
+    const onSignalCreated = vi.fn();
+    (globalThis as any).__FLUXDOM_DEVTOOLS_HOOK__ = { onSignalCreated };
+
+    try {
+      const [getA] = createSignal(10);
+      const [getB] = createSignal('hello');
+
+      expect(onSignalCreated).toHaveBeenCalledTimes(2);
+      expect(onSignalCreated.mock.calls[0][0].get()).toBe(10);
+      expect(onSignalCreated.mock.calls[1][0].get()).toBe('hello');
+    } finally {
+      delete (globalThis as any).__FLUXDOM_DEVTOOLS_HOOK__;
+    }
+  });
 });
