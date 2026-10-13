@@ -27,4 +27,14 @@ describe('matchRoute', () => {
     expect(matchRoute('/releases/(draft)', [route])?.route).toBe(route);
     expect(matchRoute('/releases/draft', [route])).toBeNull();
   });
+
+  it('decodes url-encoded route parameters', () => {
+    const route: Route = { path: '/user/[name]', component };
+    expect(matchRoute('/user/ali%20veli', [route])?.params).toEqual({ name: 'ali veli' });
+  });
+
+  it('returns raw value without throwing on malformed url encoding', () => {
+    const route: Route = { path: '/user/[name]', component };
+    expect(matchRoute('/user/%E0%A4%A', [route])?.params).toEqual({ name: '%E0%A4%A' });
+  });
 });

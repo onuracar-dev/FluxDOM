@@ -1,12 +1,9 @@
-import { activeEffect, batchedEffects, batchDepth } from './context.js';
-
-// We need to export a way for effects to subscribe to signals
-// And for signals to track which effects are subscribed
+import { activeEffect, batchedEffects, batchDepth, type ReactiveEffect } from './context.js';
 
 export function createSignal<T>(initialValue: T): [() => T, (newValue: T) => void] {
   let value = initialValue;
-  const subscribers = new Set<() => void>();
-  
+  const subscribers = new Set<ReactiveEffect>();
+
   const hook = (globalThis as any).__FLUXDOM_DEVTOOLS_HOOK__;
   if (hook) {
     hook.onSignalCreated({ get: () => value });
@@ -15,10 +12,7 @@ export function createSignal<T>(initialValue: T): [() => T, (newValue: T) => voi
   const get = () => {
     if (activeEffect) {
       subscribers.add(activeEffect);
-      // Let the effect know it subscribed to this signal
-      if ((activeEffect as any).dependencies) {
-        (activeEffect as any).dependencies.add(subscribers);
-      }
+      activeEffect.dependencies.add(subscribers);
     }
     return value;
   };

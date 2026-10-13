@@ -120,4 +120,23 @@ describe('Reactivity', () => {
       delete (globalThis as any).__FLUXDOM_DEVTOOLS_HOOK__;
     }
   });
+
+  it('allows an effect to update its own read signal until condition is satisfied', () => {
+    const [a, setA] = createSignal(0);
+    createEffect(() => {
+      if (a() < 3) {
+        setA(a() + 1);
+      }
+    });
+    expect(a()).toBe(3);
+  });
+
+  it('throws an error when an effect unconditionally re-triggers itself more than 100 times', () => {
+    const [a, setA] = createSignal(0);
+    expect(() => {
+      createEffect(() => {
+        setA(a() + 1);
+      });
+    }).toThrow('FluxDOM: effect re-triggered itself more than 100 times');
+  });
 });

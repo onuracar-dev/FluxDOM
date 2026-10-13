@@ -1,41 +1,62 @@
-import { setActiveEffect, activeEffect } from './context.js';
+import { setActiveEffect, activeEffect, type ReactiveEffect } from './context.js';
 
 export function createEffect(fn: () => void | (() => void)): () => void {
   let cleanup: (() => void) | void;
   let active = true;
   let running = false;
+  let pending = false;
+  let loopCount = 0;
 
-  const effectFn = () => {
-    if (!active || running) return;
+  const effectFn: ReactiveEffect = (() => {
+    if (!active) return;
+    if (running) {
+      pending = true;
+      return;
+    }
     running = true;
-    // 1. Run user cleanup
-    if (cleanup) {
-      const previousCleanup = cleanup;
-      cleanup = undefined;
-      previousCleanup();
-    }
-    
-    // 2. Clear old signal subscriptions to prevent memory leaks
-    if ((effectFn as any).dependencies) {
-      for (const subscribers of (effectFn as any).dependencies) {
-        subscribers.delete(effectFn);
-      }
-      (effectFn as any).dependencies.clear();
-    }
-    
-    const previousEffect = activeEffect;
-    setActiveEffect(effectFn);
+    loopCount = 0;
+
     try {
-      const result = fn();
-      cleanup = typeof result === 'function' ? result : undefined;
+      while (true) {
+        pending = false;
+        loopCount++;
+        if (loopCount > 100) {
+          throw new Error('FluxDOM: effect re-triggered itself more than 100 times');
+        }
+
+        // 1. Run user cleanup
+        if (cleanup) {
+          const previousCleanup = cleanup;
+          cleanup = undefined;
+          previousCleanup();
+        }
+
+        // 2. Clear old signal subscriptions to prevent memory leaks
+        for (const subscribers of effectFn.dependencies) {
+          subscribers.delete(effectFn);
+        }
+        effectFn.dependencies.clear();
+
+        const previousEffect = activeEffect;
+        setActiveEffect(effectFn);
+        try {
+          const result = fn();
+          cleanup = typeof result === 'function' ? result : undefined;
+        } finally {
+          setActiveEffect(previousEffect);
+        }
+
+        if (!pending || !active) break;
+      }
     } finally {
-      setActiveEffect(previousEffect);
       running = false;
+      pending = false;
+      loopCount = 0;
     }
-  };
+  }) as ReactiveEffect;
 
   // Attach a set to track signal subscriptions
-  (effectFn as any).dependencies = new Set<Set<() => void>>();
+  effectFn.dependencies = new Set<Set<ReactiveEffect>>();
 
   // Run immediately to track dependencies
   effectFn();
@@ -49,11 +70,9 @@ export function createEffect(fn: () => void | (() => void)): () => void {
       cleanup = undefined;
       finalCleanup();
     }
-    if ((effectFn as any).dependencies) {
-      for (const subscribers of (effectFn as any).dependencies) {
-        subscribers.delete(effectFn);
-      }
-      (effectFn as any).dependencies.clear();
+    for (const subscribers of effectFn.dependencies) {
+      subscribers.delete(effectFn);
     }
+    effectFn.dependencies.clear();
   };
 }

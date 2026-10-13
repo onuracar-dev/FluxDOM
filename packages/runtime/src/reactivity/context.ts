@@ -1,12 +1,17 @@
-export let activeEffect: (() => void) | null = null;
-export let batchDepth = 0;
-export let batchedEffects = new Set<() => void>();
+export interface ReactiveEffect {
+  (): void;
+  dependencies: Set<Set<ReactiveEffect>>;
+}
 
-export function setActiveEffect(effect: (() => void) | null) {
+export let activeEffect: ReactiveEffect | null = null;
+export let batchDepth = 0;
+export let batchedEffects = new Set<ReactiveEffect>();
+
+export function setActiveEffect(effect: ReactiveEffect | null): void {
   activeEffect = effect;
 }
 
-export function batch(fn: () => void) {
+export function batch(fn: () => void): void {
   batchDepth++;
   try {
     fn();

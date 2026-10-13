@@ -8,11 +8,18 @@ export interface RouteMatch {
   params: Record<string, string>;
 }
 
+interface CompiledRoute {
+  regex: RegExp;
+  paramNames: string[];
+}
+
+const routeCache = new WeakMap<Route, CompiledRoute>();
+
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function compileRoutePath(path: string): { regex: RegExp; paramNames: string[] } {
+function compileRoutePath(path: string): CompiledRoute {
   const paramNames: string[] = [];
   const parameterPattern = /\[([^\]]+)\]/g;
   let regexPath = '';
@@ -30,19 +37,35 @@ function compileRoutePath(path: string): { regex: RegExp; paramNames: string[] }
   return { regex: new RegExp(`^${regexPath}$`), paramNames };
 }
 
+function getCompiledRoute(route: Route): CompiledRoute {
+  let compiled = routeCache.get(route);
+  if (!compiled) {
+    compiled = compileRoutePath(route.path);
+    routeCache.set(route, compiled);
+  }
+  return compiled;
+}
+
+function safeDecode(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 export function matchRoute(url: string, routes: Route[]): RouteMatch | null {
   const urlObj = new URL(url, 'http://localhost');
   const pathname = urlObj.pathname;
 
   for (const route of routes) {
     const params: Record<string, string> = {};
-    const { regex, paramNames } = compileRoutePath(route.path);
+    const { regex, paramNames } = getCompiledRoute(route);
     const match = pathname.match(regex);
 
     if (match) {
-      // Assign matched values
       paramNames.forEach((name, index) => {
-        params[name] = match[index + 1];
+        params[name] = safeDecode(match[index + 1]);
       });
 
       return { route, params };
