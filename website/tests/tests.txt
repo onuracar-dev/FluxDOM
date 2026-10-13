@@ -1,28 +1,45 @@
 # Tests
 
-## Test 1 - Framework story and playground load [sanity]
+## Test 1 - Product story and compiler source/output load [sanity]
 Viewport: desktop (1280x800)
-Description: Verifies the product message and interactive model render successfully.
+Description: Verifies the two-tone heading, compiler-first proposition, and real compiler output render successfully.
 Steps:
 1. Navigate to the app
-2. Confirm "Author components" is visible and navigate to "Playground"
-3. Confirm the preview contains "compiler" and "signals"
-Expected: FluxDOM's compiler-first story and populated playground are visible.
+2. Confirm "Write components." and "Ship direct DOM." are visible in the hero
+3. Confirm the demo studio window displays Counter.flow and Counter.js (compiled)
+Expected: FluxDOM's compiler-first story and signature hero live demo are visible.
 
-## Test 2 - Empty playground input is guarded
+## Test 2 - Pipeline step player interaction
 Viewport: desktop (1280x800)
-Description: Verifies blank items are not added to the preview.
+Description: Verifies clicking a compiler pipeline step updates the stage preview.
 Steps:
-1. Navigate to the playground
-2. Clear the field labeled "New list item"
-3. Click "Add"
-Expected: The list remains unchanged and no blank list row appears.
+1. Navigate to the "How it works" section
+2. Click the "Analyze" tab
+3. Confirm the analysis output displays the resolved signals and strategy
+Expected: The step player displays the active stage's real intermediate compiler artifact.
 
-## Test 3 - Mobile navigation reaches roadmap
+## Test 3 - Mobile navigation reaches sections and handles keyboard dismissal
 Viewport: mobile (375x667)
-Description: Verifies the collapsed navigation remains usable on a narrow screen.
+Description: Verifies the collapsed navigation menu toggles, traps escape, and navigates.
 Steps:
-1. Navigate to the app
+1. Navigate to the app on mobile viewport
 2. Tap the button labeled "Open navigation"
-3. Tap "Roadmap"
-Expected: Navigation closes and the heading "Useful now for learning" is visible.
+3. Confirm "Close navigation" state and focus movement
+4. Tap "Architecture"
+Expected: Navigation menu closes and the Architecture section is reached.
+
+## Test 4 - Counter live compiler demo interaction
+Viewport: desktop (1280x800)
+Description: Verifies pressing the live component counter button updates the effect counter and highlights the executing createEffect line.
+Steps:
+1. Navigate to the hero live compiler demo
+2. Counter butonuna bas → effect sayacı 1 artar, bir satır vurgulanır
+Expected: Targeted fine-grained createEffect execution runs without Virtual DOM diffing.
+
+## Test 5 - Code block expansion
+Viewport: desktop (1280x800)
+Description: Verifies clicking the truncation expander button reveals the full code output.
+Steps:
+1. Navigate to the "How it works" section (Parse stage with AST JSON)
+2. Show full output → blok uzar
+Expected: The code block removes its 420px maximum height constraint and fade overlay.

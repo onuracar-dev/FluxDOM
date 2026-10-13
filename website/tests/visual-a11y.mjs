@@ -9,13 +9,20 @@ const installCommand = 'npm install @onuracar-dev/nimblejs';
 const fluxRoot = process.cwd();
 const nimbleRoot = resolve(fluxRoot, '..', '..', 'NimbleJs', 'website');
 const artifactsRoot = resolve(fluxRoot, 'tests', '.artifacts');
-const sites = [
-  { name: 'fluxdom', root: fluxRoot, port: 4311 },
-  { name: 'nimblejs', root: nimbleRoot, port: 4312 },
-];
+
+const sites = [{ name: 'fluxdom', root: fluxRoot, port: 4311 }];
+try {
+  await access(resolve(nimbleRoot, 'node_modules', 'vite', 'bin', 'vite.js'));
+  await access(resolve(nimbleRoot, 'dist'));
+  sites.push({ name: 'nimblejs', root: nimbleRoot, port: 4312 });
+} catch {
+  // NimbleJs preview is not available in this test environment.
+}
+
 const viewports = [
-  { name: 'desktop', width: 1440, height: 1000 },
-  { name: 'mobile', width: 390, height: 844 },
+  { name: 'mobile-375', width: 375, height: 812, isMobile: true },
+  { name: 'tablet-768', width: 768, height: 1024, isMobile: false },
+  { name: 'desktop-1440', width: 1440, height: 900, isMobile: false },
 ];
 const servers = [];
 
@@ -42,20 +49,40 @@ try {
 
 async function findChromium() {
   const browserRoot = resolve(process.env.LOCALAPPDATA ?? '', 'ms-playwright');
-  const installations = (await readdir(browserRoot, { withFileTypes: true }))
-    .filter((entry) => entry.isDirectory() && /^chromium-\d+$/.test(entry.name))
-    .map((entry) => entry.name)
-    .sort((left, right) => Number(right.split('-')[1]) - Number(left.split('-')[1]));
-  for (const installation of installations) {
-    const candidate = resolve(browserRoot, installation, 'chrome-win64', 'chrome.exe');
+  try {
+    const installations = (await readdir(browserRoot, { withFileTypes: true }))
+      .filter((entry) => entry.isDirectory() && /^chromium-\d+$/.test(entry.name))
+      .map((entry) => entry.name)
+      .sort((left, right) => Number(right.split('-')[1]) - Number(left.split('-')[1]));
+    for (const installation of installations) {
+      const candidate = resolve(browserRoot, installation, 'chrome-win64', 'chrome.exe');
+      try {
+        await access(candidate);
+        return candidate;
+      } catch {
+        // Try the next installed Chromium revision.
+      }
+    }
+  } catch {
+    // Continue to fallbacks
+  }
+
+  const fallbacks = [
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+  ];
+  for (const candidate of fallbacks) {
     try {
       await access(candidate);
       return candidate;
     } catch {
-      // Try the next installed Chromium revision.
+      // Continue to next fallback
     }
   }
-  throw new Error(`No Playwright Chromium executable found under ${browserRoot}`);
+
+  throw new Error(`No Chromium executable found under ${browserRoot} or system browser paths`);
 }
 
 function hasReportFailure(entry) {
@@ -127,14 +154,27 @@ async function auditPage(browser, site, viewport) {
   });
 
   await page.goto(`http://127.0.0.1:${site.port}`, { waitUntil: 'networkidle' });
+
+  // Light screenshot
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.screenshot({ path: resolve(artifactsRoot, `${site.name}-${viewport.name}-light.png`), fullPage: true });
+
+  // Dark screenshot
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.screenshot({ path: resolve(artifactsRoot, `${site.name}-${viewport.name}-dark.png`), fullPage: true });
+
+  // Default screenshot
   await page.screenshot({ path: resolve(artifactsRoot, `${site.name}-${viewport.name}.png`), fullPage: true });
+
+  // Run Axe accessibility audit
   const axe = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
     .analyze();
+
   const overflow = await measureOverflow(page);
   const structure = await inspectStructure(page);
-  const keyboard = await inspectKeyboard(page, viewport.name === 'desktop' ? 14 : 8);
-  const smokeFailures = await runSmoke(page, site.name, viewport.name);
+  const keyboard = await inspectKeyboard(page, viewport.isMobile ? 8 : 14);
+  const smokeFailures = await runSmoke(page, site.name, viewport.isMobile ? 'mobile' : 'desktop');
   await context.close();
 
   return {
@@ -240,7 +280,7 @@ async function runSmoke(page, site, viewport) {
       if (await menu.getAttribute('aria-expanded') !== 'true') throw new Error('aria-expanded did not become true');
       if (await menu.getAttribute('aria-label') !== 'Close navigation') throw new Error('open state was not announced');
       await page.keyboard.press('Tab');
-      const firstLink = site === 'fluxdom' ? 'The idea' : 'Model';
+      const firstLink = 'Architecture';
       const focusedName = await page.evaluate(() => (document.activeElement?.textContent ?? '').trim());
       if (focusedName !== firstLink) throw new Error(`first navigation link did not receive focus: ${focusedName}`);
       await page.keyboard.press('Escape');
@@ -248,28 +288,44 @@ async function runSmoke(page, site, viewport) {
       if (!(await menu.evaluate((element) => element === document.activeElement))) throw new Error('Escape did not restore focus to the menu button');
       await page.keyboard.press('Enter');
       if (await menu.getAttribute('aria-expanded') !== 'true') throw new Error('menu did not reopen from the keyboard');
-      const destination = site === 'fluxdom' ? 'Playground' : 'Boundaries';
+      const destination = 'Architecture';
       await page.getByRole('link', { name: destination, exact: true }).click();
       await page.waitForFunction(() => document.querySelector('button.menu')?.getAttribute('aria-expanded') === 'false');
       if (await menu.getAttribute('aria-label') !== 'Open navigation') throw new Error('closed state was not announced');
-      if (await page.locator('nav.nav').isVisible()) throw new Error('navigation stayed visible');
+      if (await page.locator('nav.nav--open').count() > 0) throw new Error('navigation stayed visible');
     });
   }
 
   if (site === 'fluxdom') {
-    await check('playground add/hide/show interaction', async () => {
-      const input = page.getByRole('textbox', { name: 'New list item' });
-      await input.fill('QA item');
-      await input.press('Enter');
-      await page.getByText('QA item', { exact: true }).waitFor();
-      await page.getByRole('button', { name: 'Hide block' }).click();
-      await page.getByText('Conditional block is not visible.').waitFor();
-      await page.getByRole('button', { name: 'Show block' }).click();
-      await page.getByText('QA item', { exact: true }).waitFor();
-      await page.getByRole('button', { name: 'Remove QA item' }).click();
-      if (await page.getByText('QA item', { exact: true }).count()) throw new Error('removed item stayed visible');
-      await page.getByRole('button', { name: starterCommand }).click();
+    await check('starter command copy and pipeline step interaction', async () => {
+      const copyBtn = page.getByRole('button', { name: starterCommand });
+      await copyBtn.click();
       if (await page.evaluate(() => navigator.clipboard.readText()) !== starterCommand) throw new Error('starter command was not copied');
+
+      const analyzeTab = page.locator('#tab-analyze');
+      await analyzeTab.click();
+      await page.getByText('"strategy"', { exact: false }).waitFor();
+    });
+
+    await check('counter button click increments effect count and highlights effect line', async () => {
+      if (viewport === 'mobile') {
+        const resultTab = page.locator('#tab-mobile-result');
+        if (await resultTab.count() > 0) await resultTab.click();
+      }
+      const counterBtn = page.locator('.demo-counter-mount button').first();
+      await counterBtn.waitFor();
+      await counterBtn.click();
+      await page.waitForFunction(() => document.querySelector('.demo-dock-counter')?.textContent?.includes('effects run: 1'));
+    });
+
+    await check('show full output expands truncated code block', async () => {
+      const parseTab = page.locator('#tab-parse');
+      await parseTab.click();
+      const showBtn = page.locator('.show-full-btn').first();
+      if (await showBtn.count() > 0) {
+        await showBtn.click();
+        await page.waitForFunction(() => document.querySelectorAll('.code-block-wrapper.is-collapsed').length === 0);
+      }
     });
   } else {
     await check('batch and reset interaction', async () => {

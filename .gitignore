@@ -10,3 +10,6 @@ dist/
 .env
 .npmrc
 .fluxdom-cli-test-*/
+
+# Local task specs
+TASK_*.md
