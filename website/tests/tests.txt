@@ -1,45 +1,111 @@
 # Tests
 
-## Test 1 - Product story and compiler source/output load [sanity]
-Viewport: desktop (1280x800)
-Description: Verifies the two-tone heading, compiler-first proposition, and real compiler output render successfully.
+## Test 1 - Sayfa Sağlığı ve Landmark Yapısı
+Viewport: desktop (1440x900)
+Description: Sayfa açılışında konsol hatası olmadığını, tek h1 bulunduğunu, header/nav/main/footer landmark'larının eksiksiz olduğunu ve tüm butonların erişilebilir ada sahip olduğunu doğrular.
 Steps:
-1. Navigate to the app
-2. Confirm "Write components." and "Ship direct DOM." are visible in the hero
-3. Confirm the demo studio window displays Counter.flow and Counter.js (compiled)
-Expected: FluxDOM's compiler-first story and signature hero live demo are visible.
+1. Sayfaya git ve konsol ile sayfa hatalarını dinle.
+2. Sayfadaki h1 sayısını kontrol et.
+3. header, nav, main ve footer etiketlerinin varlığını doğrula.
+4. Sayfadaki tüm button elemanlarının aria-label veya metin içeriğine sahip olduğunu doğrula.
+Expected: Konsol hatası 0, h1 sayısı 1, temel landmark'lar mevcut ve tüm butonların erişilebilir bir adı var.
 
-## Test 2 - Pipeline step player interaction
-Viewport: desktop (1280x800)
-Description: Verifies clicking a compiler pipeline step updates the stage preview.
+## Test 2 - Axe Erişilebilirlik Denetimi
+Viewport: mobile (375x812) ve desktop (1440x900)
+Description: WCAG 2.0 / 2.1 / 2.2 AA erişilebilirlik kurallarına göre sayfayı denetler.
 Steps:
-1. Navigate to the "How it works" section
-2. Click the "Analyze" tab
-3. Confirm the analysis output displays the resolved signals and strategy
-Expected: The step player displays the active stage's real intermediate compiler artifact.
+1. Sayfayı 375px ve 1440px genişliklerinde aç.
+2. Giriş animasyonlarının tamamlanmasını bekle.
+3. AxeBuilder ile erişilebilirlik denetimi çalıştır.
+Expected: Hem 375px hem de 1440px görünüm alanında 0 kural ihlali (0 violation).
 
-## Test 3 - Mobile navigation reaches sections and handles keyboard dismissal
-Viewport: mobile (375x667)
-Description: Verifies the collapsed navigation menu toggles, traps escape, and navigates.
+## Test 3 - Yatay Taşma Kontrolü
+Viewport: mobile (375x812), tablet (768x1024), desktop (1440x900)
+Description: Farklı ekran genişliklerinde yatay kaydırma çubuğu veya taşma olmadığını doğrular.
 Steps:
-1. Navigate to the app on mobile viewport
-2. Tap the button labeled "Open navigation"
-3. Confirm "Close navigation" state and focus movement
-4. Tap "Architecture"
-Expected: Navigation menu closes and the Architecture section is reached.
+1. 375px, 768px ve 1440px genişliklerinde sayfayı aç.
+2. documentElement.scrollWidth değerini innerWidth ile karşılaştır.
+Expected: Her üç görünüm alanında da scrollWidth <= innerWidth.
 
-## Test 4 - Counter live compiler demo interaction
-Viewport: desktop (1280x800)
-Description: Verifies pressing the live component counter button updates the effect counter and highlights the executing createEffect line.
+## Test 4 - Hero Başlık Erişilebilir Adı
+Viewport: desktop (1440x900)
+Description: Hero bölümündeki h1 başlığının doğru aria-label değerine sahip olduğunu doğrular.
 Steps:
-1. Navigate to the hero live compiler demo
-2. Counter butonuna bas → effect sayacı 1 artar, bir satır vurgulanır
-Expected: Targeted fine-grained createEffect execution runs without Virtual DOM diffing.
+1. Hero h1.hero-h elemanını seç.
+2. aria-label özniteliğini oku.
+Expected: h1'in aria-label değeri tam olarak "Write components. Ship direct DOM." olmalıdır.
 
-## Test 5 - Code block expansion
-Viewport: desktop (1280x800)
-Description: Verifies clicking the truncation expander button reveals the full code output.
+## Test 5 - Signal Alanı Fine-Grained Reaktivite
+Viewport: desktop (1440x900)
+Description: Hero arka planındaki nokta alanının sadece imlece yakın noktalarda reaktif çalıştığını ve imleç ayrıldıktan sonra sakinleştiğini doğrular.
 Steps:
-1. Navigate to the "How it works" section (Parse stage with AST JSON)
-2. Show full output → blok uzar
-Expected: The code block removes its 420px maximum height constraint and fade overlay.
+1. Hero üzerinde 10 farklı konuma pointermove olayı gönder.
+2. Her karede .meter-live değerini ve toplam nokta sayısını oku.
+3. pointerleave olayı tetikle ve 2 saniye bekle.
+4. Style özniteliğinde --h > 0 olan nokta olup olmadığını kontrol et.
+Expected: Her karede .meter-live değeri toplam nokta sayısının %15'inden az ve en az bir karede > 0 olmalı; 2 saniye sonra --h > 0 olan nokta kalmamalıdır.
+
+## Test 6 - Demo Sayaçları ve İnce Taneli Güncellemeler
+Viewport: desktop (1440x900)
+Description: Canlı derlenmiş bileşendeki sayacın 3 tıklamada doğru effect ve DOM yazımı ürettiğini doğrular.
+Steps:
+1. .live-mount button elemanına 50ms aralıklarla 3 kez tıkla.
+2. Buton metnini ve .readout sayaçlarını oku.
+Expected: Buton metni "Count: 3", effects "6", DOM writes "3" olmalıdır.
+
+## Test 7 - Prototype Monkey-Patch Güvenliği
+Viewport: desktop (1440x900)
+Description: FluxDOM çalışma zamanının yerel DOM API prototiplerini bozmadığını/yamalamadığını doğrular.
+Steps:
+1. Element.prototype.setAttribute.toString() değerini sorgula.
+Expected: Çıktı "[native code]" içermelidir.
+
+## Test 8 - Class Sınırı ve DOM Yazım Artışı
+Viewport: desktop (1440x900)
+Description: Sayacın 6. tıklamada koşullu class aldığını ve DOM yazım sayacının 1 fazladan arttığını doğrular.
+Steps:
+1. Sayacı 3 kez daha tıkla (toplam 6 tıklama).
+2. Buton class özniteliğini ve DOM writes değerini oku.
+Expected: Buton "max" class'ını alır, DOM writes değeri metin yazımına ek olarak class yazımı nedeniyle 1 fazladan artar (toplam 7 write).
+
+## Test 9 - Break it Modu ve Geri Dönüş
+Viewport: desktop (1440x900)
+Description: "Break it" sekmesine geçildiğinde derleyici hatasının gösterildiğini ve "Counter.flow"ya dönüldüğünde durumun korunduğunu doğrular.
+Steps:
+1. .seg button içindeki "Break it" sekmesine tıkla.
+2. .compile-error paneli metnini kontrol et.
+3. "Counter.flow" sekmesine geri dön ve sayacın durumunu kontrol et.
+Expected: .compile-error içinde "Destructuring in a top-level let" hatası görüntülenir. Geri dönüldüğünde buton görünür ve sayaç kaldığı değerden devam eder.
+
+## Test 10 - Derleyici Aşamaları
+Viewport: desktop (1440x900)
+Description: Derleyici bölümünde 5 aşamanın listelendiğini ve Analyze aşamasında sinyallerin tespit edildiğini doğrular.
+Steps:
+1. .stage elemanlarını say.
+2. Analyze aşamasındaki .chip--signal elemanlarını kontrol et.
+Expected: 5 adet .stage bulunur ve Analyze aşamasında en az bir .chip--signal mevcuttur.
+
+## Test 11 - Paketler ve Bağımlılık Grafı
+Viewport: desktop (1440x900)
+Description: Paketler bölümünde 7 paketin ve aralarındaki bağlantı oklarının geçerli SVG path'leri olarak çizildiğini doğrular.
+Steps:
+1. .pkg elemanlarını say.
+2. .graph-edges path.edge elemanlarını ve d özniteliklerini incele.
+Expected: 7 adet .pkg ve en az 7 adet .edge path'i bulunur; her path'in d özniteliği dolu olmalıdır.
+
+## Test 12 - Terminal Komut Animasyonu
+Viewport: desktop (1440x900)
+Description: Sayfa sonundaki terminal bölümüne kaydırıldığında CLI komutunun ve çıktısının belirdiğini doğrular.
+Steps:
+1. Kapanış (.closing) bölümüne scroll et.
+2. 3 saniye içinde .term-cmd ve .term-out elemanlarını kontrol et.
+Expected: .term-cmd içinde "$ npx @fluxdom/cli create my-flow-app" ve en az bir .term-out satırı görünür.
+
+## Test 13 - Tercih Edilen Azaltılmış Hareket (prefers-reduced-motion)
+Viewport: desktop (1440x900)
+Description: prefers-reduced-motion: reduce etkinken animasyonların atlandığını ve doğrudan son duruma geçildiğini doğrular.
+Steps:
+1. reducedMotion: 'reduce' bağlamı ile sayfayı yükle.
+2. 100ms içinde .swap--done class'ını kontrol et.
+3. Hero alanı üzerinde pointermove gönder ve .meter-live değerini kontrol et.
+Expected: Başlık 100ms içinde derlenmiş haliyle görünür (.swap--done), pointermove sonrasında .meter-live 0 olarak kalır.
