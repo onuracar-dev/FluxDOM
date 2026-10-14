@@ -1,9 +1,9 @@
-import { __trace } from '../trace.js';
-import { createSignal } from '@fluxdom/runtime';
+import { __trace } from '../demo/runtime-shim.js';
+import { createSignal } from '../demo/runtime-shim.js';
 
   const [__count, __setCount] = createSignal(0);
 
-import { addEventListener, createEffect, createElement, createText, insert, setAttribute, setText } from '@fluxdom/runtime';
+import { addEventListener, createEffect, createElement, createText, insert, setAttribute, setText } from '../demo/runtime-shim.js';
 
 export function render() {
   const __el0 = createElement("button");

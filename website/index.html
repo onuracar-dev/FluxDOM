@@ -3,12 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#fbfbfd" />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%230066cc'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='monospace' font-size='36' font-weight='700' fill='white'%3EF%3C/text%3E%3C/svg%3E" />
-    <meta name="description" content="FluxDOM explores a compiler-first frontend model: parse a single-file component, analyze its behavior, generate direct DOM operations, and let small signals update only the values that depend on them." />
-    <meta property="og:title" content="FluxDOM — Write components. Ship direct DOM." />
-    <meta property="og:description" content="FluxDOM explores a compiler-first frontend model: parse a single-file component, analyze its behavior, generate direct DOM operations, and let small signals update only the values that depend on them." />
     <title>FluxDOM — Write components. Ship direct DOM.</title>
+    <meta
+      name="description"
+      content="FluxDOM is an experimental compiler for .flow components and a fine-grained DOM runtime. Signals update only the nodes that read them."
+    />
+    <meta property="og:title" content="FluxDOM" />
+    <meta property="og:description" content="Experimental .flow compiler and fine-grained DOM runtime." />
+    <meta property="og:image" content="/og-image.jpg" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231b1915'/%3E%3Cpath d='M14 32H50' stroke='%23efe9dc' stroke-width='3'/%3E%3Ccircle cx='14' cy='32' r='7' fill='%23fb923c'/%3E%3Ccircle cx='32' cy='32' r='7' fill='%23b79cff'/%3E%3Ccircle cx='50' cy='32' r='7' fill='%232dd4bf'/%3E%3C/svg%3E" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="/og-image.jpg" />
+    <meta name="theme-color" content="#f3efe6" />
+    <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+    <link href="https://api.fontshare.com/v2/css?f[]=switzer@300,400,500,600,700&display=swap" rel="stylesheet" />
+    <!-- Monospace is used only inside code, terminal and trace output. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   </head>
   <body>
     <div id="root"></div>

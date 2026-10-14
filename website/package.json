@@ -8,7 +8,7 @@
     "samples": "node scripts/generate-samples.mjs",
     "build": "vite build",
     "preview": "vite preview",
-    "qa": "node tests/visual-a11y.mjs"
+    "qa": "node tests/visual-a11y.mjs && node tests/contrast-check.mjs"
   },
   "dependencies": {
     "react": "^19.0.0",
@@ -23,12 +23,10 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
-    "autoprefixer": "^10.4.0",
     "magic-string": "^0.30.17",
     "playwright": "^1.58.2",
     "postcss": "^8.4.0",
     "shiki": "^3.0.0",
-    "tailwindcss": "^3.4.0",
     "typescript": "^5.7.0",
     "vite": "^6.0.0"
   }
