@@ -13,3 +13,4 @@ dist/
 
 # Local task specs
 TASK_*.md
+.claude/
