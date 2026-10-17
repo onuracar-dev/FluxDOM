@@ -1,113 +1,174 @@
 # FluxDOM
 
-Experimental `.flow` component compiler and fine-grained DOM runtime.
+**Write components. Ship direct DOM.**
 
-<img src="./docs/assets/preview.svg" alt="FluxDOM architecture preview">
+FluxDOM is an experimental compiler for single-file `.flow` components, paired with a small fine-grained DOM runtime. The compiler turns your template into plain DOM calls. At runtime, signals update only the nodes that read them. There is no virtual DOM and no diffing.
 
-[Live website](https://fluxdom.onuracar.dev/) · [GitHub repository](https://github.com/onuracar-dev/FluxDOM)
+[Live site and demo](https://fluxdom.onuracar.dev/) · [Compiler source](./packages/compiler/src) · [Known limitations](#what-works-and-what-doesnt)
 
-FluxDOM explores a compiler-first frontend model: parse a single-file
-component, analyze its behavior, generate direct DOM operations, and let small
-signals update only the values that depend on them.
+> **Status:** pre-1.0 learning project. It is built to be read and understood, not to run your checkout page. Syntax, output and APIs can change.
 
-> **Status:** a pre-1.0 engineering prototype, not a production framework.
-> Syntax, generated output, SSR behavior, and package APIs can change.
+---
 
-## Try the starter
+## The idea in one example
 
-After the packages are available on npm:
-
-```bash
-npx @fluxdom/cli create my-flow-app
-cd my-flow-app
-npm install
-npm run dev
-```
-
-For repository development:
-
-```bash
-npm ci
-npm test
-npm run build
-npm run dev --workspace hello-world
-```
-
-## Component example
+You write this:
 
 ```html
 <script lang="ts">
-  let items = ['compiler', 'signals'];
-  let visible = true;
+  let count = 0;
 </script>
 
 <template>
-  {#if visible}
-    <ul :class="items.length > 1 ? 'ready' : ''">
-      {#each items as item, index}
-        <li>{index}: {item}</li>
-      {/each}
-    </ul>
-  {/if}
+  <button :class="count > 5 ? 'max' : ''" @click="() => count++">
+    Count: {count}
+  </button>
 </template>
-
-<style scoped>
-  li { color: rebeccapurple; }
-</style>
 ```
 
-The parser validates nesting and reports filenames for malformed tags or
-directives. Nested `if`/`each`, reactive attributes, events, expressions, and
-scoped style markers are covered by fixtures. The Vite plugin now imports its
-virtual CSS output, so component styles are included in application builds.
+The compiler produces this (real output, whitespace trimmed):
+
+```js
+import { createSignal } from '@fluxdom/runtime';
+import { addEventListener, createEffect, createElement, createText, insert, setAttribute, setText } from '@fluxdom/runtime';
+
+const [__count, __setCount] = createSignal(0);
+
+export function render() {
+  const __el0 = createElement("button");
+  addEventListener(__el0, "click", () => __setCount(__count() + 1));
+  createEffect(() => { setAttribute(__el0, "class", __count() > 5 ? 'max' : ''); });
+  const __text1 = createText(" Count: ");
+  insert(__el0, __text1);
+  const __expr2 = createText('');
+  createEffect(() => { setText(__expr2, String(__count())); });
+  insert(__el0, __expr2);
+  return __el0;
+}
+```
+
+Three things happened:
+
+1. **`let count = 0` became a signal.** Every top-level `let` in `<script>` turns into a `createSignal` pair. Reads become `__count()`, writes become `__setCount(...)`.
+2. **Each dynamic part got its own effect.** The text node and the `class` attribute each subscribe only to the signals they read.
+3. **Clicking writes one text node.** There is no re-render and no tree comparison. The effect that owns `__expr2` runs and calls `setText`. You can watch this happen, line by line, in the [live demo](https://fluxdom.onuracar.dev/#demo).
+
+## How the compiler works
+
+```text
+App.flow
+  │
+  ├─ 1. Parse       split <script>, <template>, <style>; build a template AST
+  ├─ 2. Analyze     find signals (top-level let), pick a render strategy
+  ├─ 3. Transform   script → signals, template → DOM calls, style → scoped CSS
+  ├─ 4. Emit        render() function + virtual CSS module
+  └─ 5. Bundle      the Vite plugin hands both to Vite
+```
+
+| Stage | Where to read it |
+| --- | --- |
+| Parse | [`compiler/src/parser`](./packages/compiler/src/parser/index.ts) |
+| Analyze | [`compiler/src/analyzer`](./packages/compiler/src/analyzer/index.ts) |
+| Script transform | [`transformer/ast-rewriter.ts`](./packages/compiler/src/transformer/ast-rewriter.ts) |
+| Template transform | [`transformer/template-transform.ts`](./packages/compiler/src/transformer/template-transform.ts) |
+| Scoped styles | [`transformer/style-transform.ts`](./packages/compiler/src/transformer/style-transform.ts) |
+| Signals and effects | [`runtime/src/reactivity`](./packages/runtime/src/reactivity) |
+
+The script transform uses a real JavaScript/TypeScript AST (`@babel/parser`) with scope tracking. A `count` parameter inside a function is a different variable from the top-level `count` signal, and the compiler knows that. When it can't handle something, it fails with a clear error instead of emitting broken JavaScript.
 
 ## Packages
 
-| Package | Current scope |
+| Package | What it does |
 | --- | --- |
-| `@fluxdom/compiler` | `.flow` parser, analysis, and prototype code generation |
-| `@fluxdom/runtime` | Signals, effects, batching, and direct DOM helpers |
-| `@fluxdom/vite-plugin` | `.flow` transforms, virtual CSS, and safe static SSR helper |
-| `@fluxdom/server` | Escaped static serialization and explicit server DOM operations |
-| `@fluxdom/router` | Route matching and browser navigation signals |
-| `@fluxdom/store` | Signal-backed stores with browser persistence |
-| `@fluxdom/cli` | Working project scaffold plus local Vite wrappers |
+| [`@fluxdom/compiler`](./packages/compiler) | `.flow` parser, analysis and code generation |
+| [`@fluxdom/runtime`](./packages/runtime) | Signals, effects, lazy computed values, batching, DOM helpers |
+| [`@fluxdom/vite-plugin`](./packages/vite-plugin) | Compiles `.flow` imports and bundles their CSS |
+| [`@fluxdom/cli`](./packages/cli) | `create` scaffold plus `dev` / `build` wrappers |
+| [`@fluxdom/store`](./packages/store) | Signal-backed stores with optional browser persistence |
+| [`@fluxdom/router`](./packages/router) | Route matching and navigation signals |
+| [`@fluxdom/server`](./packages/server) | Escaped static HTML rendering, never evaluates component code |
 
-The DevTools experiment remains private because its panel and asset packaging
-are not ready for independent distribution.
+The packages are published on npm as `0.1.0`. That release predates the AST-based compiler and the runtime fixes, so **use the repository for the current behavior** until the next release.
 
-## Supported boundary and known limitations
+## Try it
 
-- The script transform is AST-based (`@babel/parser`). Only top-level `let` declarations inside `<script>` are compiled into reactive signals (`createSignal`).
-- Variables declared inside functions, blocks, or loops are standard local variables and shadow signals with the same name.
-- Top-level destructuring `let` declarations (e.g. `let { a } = obj;`, `let [a, b] = arr;`) are not supported; declare each signal individually (`let a = obj.a;`).
-- Signals cannot be exported directly from a `.flow` script (`export { count }` or `export let count = 0;`). Move shared state to `@fluxdom/store`.
-- Destructuring assignment targets to signals (`[count] = arr` or `({ count } = obj)`) are not supported.
-- Suffix and prefix increment/decrement expressions (`x++`, `++x`, `x--`, `--x`) transform to setter calls (`__setX(__x() ± 1)`); when used inside complex expressions, the return value difference between prefix and postfix is not preserved.
-- `{#each}` rerenders its block when the collection signal changes. It does not perform keyed reconciliation.
-- `{#if}` uses a display wrapper rather than structural mount/unmount semantics.
-- Scoped CSS handles ordinary flat selectors. Complex nested at-rules and `:global(...)` behavior need broader fixture coverage.
-- Hydration is currently destructive client rerendering.
-- Static SSR never evaluates component source. Dynamic templates return a client-render mount point; full SSR is not implemented.
-- Router mounting, nested routes, lifecycle hooks, source maps, and fine-grained HMR remain roadmap work.
+From the repository:
 
-Do not compile and execute untrusted `.flow` source. See [SECURITY.md](./SECURITY.md).
-
-## Architecture
-
-```text
-.flow source
-  -> structural parser
-  -> static analysis
-  -> script/template/style transforms
-  -> direct DOM runtime calls + virtual CSS module
-  -> Vite bundle
+```bash
+git clone https://github.com/onuracar-dev/FluxDOM.git
+cd FluxDOM
+npm ci
+npm run check                          # build every package and run the tests
+npm run dev --workspace hello-world    # http://localhost:5180
 ```
 
-FluxDOM and NimbleJS intentionally remain independently versioned. Their shared
-semantic boundary and revisit criteria are recorded in
-[`docs/adr/0001-fluxdom-and-nimblejs-boundary.md`](./docs/adr/0001-fluxdom-and-nimblejs-boundary.md).
+Using a component in your own entry file:
 
-## Contributing and license
+```ts
+import { render } from './App.flow';
+import { insert } from '@fluxdom/runtime';
 
-Read [CONTRIBUTING.md](./CONTRIBUTING.md). FluxDOM is MIT licensed.
+insert(document.getElementById('app')!, render());
+```
+
+Scaffold a new project (uses the published `0.1.0` packages):
+
+```bash
+npx @fluxdom/cli create my-flow-app
+cd my-flow-app && npm install && npm run dev
+```
+
+## Template syntax
+
+| Syntax | Meaning |
+| --- | --- |
+| `{expr}` | Text that updates when the signals in `expr` change |
+| `:attr="expr"` | Reactive attribute |
+| `@event="handler"` | Event listener |
+| `{#if cond} … {/if}` | Conditional block |
+| `{#each list as item, index} … {/each}` | List block |
+| `<style scoped>` | CSS scoped to this component |
+
+## What works, and what doesn't
+
+**Works today**
+
+- AST-based script transform with scope tracking, covered by edge-case tests.
+- Nested `{#if}` / `{#each}`, reactive attributes, events and expressions.
+- Scoped styles bundled through Vite.
+- Signals, effects, batching, and lazy computed values without diamond-dependency glitches.
+- Static SSR that escapes output and refuses to evaluate component code.
+
+**Not yet**
+
+- Keyed lists. `{#each}` rerenders its whole block when the list changes.
+- Structural `{#if}`. It hides content with a display wrapper instead of unmounting it.
+- Real hydration and full SSR. Hydration currently rerenders on the client.
+- Destructuring in a top-level `let`, exporting signals, and destructuring assignment to signals. These fail with a compiler error that says what to write instead.
+- In `x++` used inside a larger expression, the prefix/postfix return value difference is not preserved.
+- Router mounting, nested routes, lifecycle hooks, source maps, and fine-grained HMR.
+
+Don't compile `.flow` files you don't trust. See [SECURITY.md](./SECURITY.md).
+
+## Repository layout
+
+```text
+packages/       compiler, runtime, vite-plugin, cli, store, router, server, devtools (private)
+examples/       hello-world app
+apps/docs/      minimal docs app built with FluxDOM
+website/        fluxdom.onuracar.dev (React shell, demos run on the FluxDOM runtime)
+docs/adr/       design decisions
+```
+
+## Design notes
+
+- FluxDOM and its sibling project NimbleJS are versioned independently on purpose. See [ADR 0001](./docs/adr/0001-fluxdom-and-nimblejs-boundary.md).
+- The website's demos run on FluxDOM's own runtime. The page shell is React, because FluxDOM's router and SSR aren't ready yet.
+
+## Contributing
+
+Issues and small pull requests are welcome. Read [CONTRIBUTING.md](./CONTRIBUTING.md) first, and run `npm run check` before you open a PR.
+
+## License
+
+[MIT](./LICENSE) © Onur Acar
